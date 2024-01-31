@@ -1,8 +1,10 @@
-﻿using UTJ.GameObjectExtensions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UTJ.Jobs;
+using UTJ.Support;
+using UTJ.Support.GameObjectExtensions;
 
 namespace UTJ
 {
@@ -40,7 +42,7 @@ namespace UTJ
             var boneListPath = FindCharacterBoneListPath(rootObject);
             if (boneListPath.Length > 0)
             {
-                var boneListText = FileUtil.ReadAllText(boneListPath);
+                var boneListText = UTJ.Support.FileUtil.ReadAllText(boneListPath);
                 var boneNames = GetDynamicsBoneNamesFromBoneList(boneListText).ToArray();
                 var dynamicsBones = new List<GameObject>(boneNames.Count());
                 var allNodes = rootObject.GetComponentsInChildren<Transform>(true);
@@ -87,14 +89,14 @@ namespace UTJ
             return boneNames;
         }
 
-        public static SpringManager PerformSetup
+        public static SpringJobManager PerformSetup
         (
             GameObject rootObject, 
             IEnumerable<GameObject> newSpringBones,
             AutoSetupParameters parameters
         )
         {
-            SpringBoneSetup.DestroySpringManagersAndBones(rootObject);
+            SpringBoneSetupUTJ.DestroySpringManagersAndBones(rootObject);
             SpringColliderSetup.DestroySpringColliders(rootObject);
 
             var springBones = new List<SpringBone>();
@@ -103,21 +105,21 @@ namespace UTJ
                 springBones.Add(boneParent.AddComponent<SpringBone>());
             }
 
-            var manager = rootObject.AddComponent<SpringManager>();
-            SpringBoneSetup.FindAndAssignSpringBones(manager, true);
+            var manager = rootObject.AddComponent<SpringJobManager>();
+            SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
 
             if (parameters.createPivots)
             {
                 foreach (var springBone in springBones)
                 {
-                    SpringBoneSetup.CreateSpringPivotNode(springBone);
+                    SpringBoneSetupUTJ.CreateSpringPivotNode(springBone);
                 }
             }
 
             return manager;
         }
 
-        public static void UpdateSpringManagerFromBoneList(SpringManager springManager)
+        public static void UpdateSpringManagerFromBoneList(SpringJobManager springManager)
         {
             var rootObject = springManager.gameObject;
             var designatedSpringBones = GetBonesDesignatedForDynamics(rootObject);
@@ -130,11 +132,11 @@ namespace UTJ
             {
                 var pivot = boneToDestroy.pivotNode;
                 if (pivot != null
-                    && SpringBoneSetup.IsPivotProbablySafeToDestroy(pivot, skinBones))
+                    && SpringBoneSetupUTJ.IsPivotProbablySafeToDestroy(pivot, skinBones))
                 {
-                    SpringBoneSetup.DestroyUnityObject(pivot.gameObject);
+                    SpringBoneSetupUTJ.DestroyUnityObject(pivot.gameObject);
                 }
-                SpringBoneSetup.DestroyUnityObject(boneToDestroy);
+                SpringBoneSetupUTJ.DestroyUnityObject(boneToDestroy);
             }
 
             var objectsToAddBonesTo = designatedSpringBones
@@ -142,9 +144,9 @@ namespace UTJ
             foreach (var newBoneOwner in objectsToAddBonesTo)
             {
                 var newSpringBone = newBoneOwner.AddComponent<SpringBone>();
-                SpringBoneSetup.CreateSpringPivotNode(newSpringBone);
+                SpringBoneSetupUTJ.CreateSpringPivotNode(newSpringBone);
             }
-            SpringBoneSetup.FindAndAssignSpringBones(springManager, true);
+            SpringBoneSetupUTJ.FindAndAssignSpringBones(springManager, true);
         }
 
         // private

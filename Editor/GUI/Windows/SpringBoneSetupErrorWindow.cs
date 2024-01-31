@@ -17,7 +17,7 @@ namespace UTJ
             GameObject springBoneRoot,
             GameObject colliderRoot,
             string path, 
-            IEnumerable<DynamicsSetup.ParseMessage> errors, 
+            IEnumerable<Support.DynamicsSetup.ParseMessage> errors, 
             IConfirmAction onConfirm
         )
         {
@@ -35,7 +35,7 @@ namespace UTJ
         private GameObject colliderRoot;
         private string filePath;
         private IConfirmAction onConfirmAction;
-        private DynamicsSetup.ParseMessage[] errors;
+        private Support.DynamicsSetup.ParseMessage[] errors;
         private Vector2 scrollPosition;
 
         private void OnGUI()

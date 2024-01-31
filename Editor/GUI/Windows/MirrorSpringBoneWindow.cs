@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UTJ.GameObjectExtensions;
+using UTJ.Support.GameObjectExtensions;
 
 namespace UTJ
 {
@@ -267,7 +267,7 @@ namespace UTJ
             var editablePivots = mirrorItems
                 .Select(item => item.targetBone.pivotNode)
                 .Where(pivotNode => pivotNode != null
-                    && SpringBoneSetup.IsPivotProbablySafeToDestroy(pivotNode, allSkinBones))
+                    && SpringBoneSetupUTJ.IsPivotProbablySafeToDestroy(pivotNode, allSkinBones))
                 .ToArray();
 
             undoItems.AddRange(editablePivots);

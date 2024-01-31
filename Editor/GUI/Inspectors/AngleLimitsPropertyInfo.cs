@@ -10,8 +10,8 @@ namespace UTJ
             public AngleLimitPropertyInfo(string newName, string labelText)
                 : base(newName, labelText)
             {
-                minSlider = new FloatSlider("下限", 0f, -180f);
-                maxSlider = new FloatSlider("上限", 0f, 180f);
+                minSlider = new FloatSlider("Lower limit", 0f, -180f);
+                maxSlider = new FloatSlider("Upper limit", 0f, 180f);
             }
 
             public override void Show()
@@ -50,7 +50,7 @@ namespace UTJ
                     GUILayout.Space(SubSpacing);
                     GUILayout.BeginHorizontal();
 
-                    updateValuesTogether = GUILayout.Toggle(updateValuesTogether, "同時に変更");
+                    updateValuesTogether = GUILayout.Toggle(updateValuesTogether, "Proportional");
                     if (updateValuesTogether)
                     {
                         if (minChanged)
@@ -63,17 +63,17 @@ namespace UTJ
                         }
                     }
 
-                    if (GUILayout.Button("下限に統一"))
+                    if (GUILayout.Button("Mirror lower limit"))
                     {
                         maxProperty.floatValue = -minProperty.floatValue;
                     }
 
-                    if (GUILayout.Button("上限に統一"))
+                    if (GUILayout.Button("Mirror upper limit"))
                     {
                         minProperty.floatValue = -maxProperty.floatValue;
                     }
 
-                    if (GUILayout.Button("反転"))
+                    if (GUILayout.Button("Invert"))
                     {
                         var minValue = minProperty.floatValue;
                         minProperty.floatValue = -maxProperty.floatValue;

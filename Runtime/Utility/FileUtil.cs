@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public class FileUtil
     {

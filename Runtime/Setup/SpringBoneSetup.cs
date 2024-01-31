@@ -1,18 +1,20 @@
-﻿using UTJ.GameObjectExtensions;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UTJ.Jobs;
+using UTJ.Support.GameObjectExtensions;
 
 namespace UTJ
 {
-    public static class SpringBoneSetup
+    public static class SpringBoneSetupUTJ
     {
         public static void DestroyUnityObject(UnityEngine.Object objectToDestroy)
         {
 #if UNITY_EDITOR
             UnityEditor.Undo.DestroyObjectImmediate(objectToDestroy);
 #else
-            Object.DestroyImmediate(objectToDestroy);
+            UnityEngine.Object.DestroyImmediate(objectToDestroy);
 #endif
         }
 
@@ -22,7 +24,7 @@ namespace UTJ
         {
             DestroyPivotObjects(rootObject);
 
-            var springManagers = rootObject.GetComponentsInChildren<SpringManager>(true);
+            var springManagers = rootObject.GetComponentsInChildren<SpringJobManager>(true);
             foreach (var manager in springManagers)
             {
                 DestroyUnityObject(manager);
@@ -36,12 +38,12 @@ namespace UTJ
         }
 
         // 全子供にSpringBoneを見つけて、springManagerに割り当てる
-        public static void FindAndAssignSpringBones(SpringManager springManager, bool includeInactive = false)
+        public static void FindAndAssignSpringBones(SpringJobManager springManager, bool includeInactive = false)
         {
             if (springManager != null)
             {
                 var sortedBones = GetSpringBonesSortedByDepth(springManager.gameObject, includeInactive);
-                springManager.springBones = sortedBones.ToArray();
+                springManager.SortedBones = sortedBones.ToArray();
             }
         }
 
@@ -54,6 +56,11 @@ namespace UTJ
             if (springBone == null)
             {
                 springBone = rootObject.gameObject.AddComponent<SpringBone>();
+                springBone.validChildren = Array.Empty<Transform>();
+                springBone.lengthLimitTargets = Array.Empty<Transform>();
+                springBone.sphereColliders = Array.Empty<SpringSphereCollider>();
+                springBone.capsuleColliders = Array.Empty<SpringCapsuleCollider>();
+                springBone.panelColliders = Array.Empty<SpringPanelCollider>();
             }
 
             for (var childIndex = 0; childIndex < rootObject.childCount; ++childIndex)
@@ -142,7 +149,7 @@ namespace UTJ
         public static bool IsPivotProbablySafeToDestroy(Transform pivot, IEnumerable<Transform> skinBones)
         {
             // Definitely not safe to destroy
-            if (skinBones.Contains(pivot)
+            if (skinBones != null && skinBones.Contains(pivot)
                 || pivot.childCount > 0
                 || pivot.GetComponent<Renderer>() != null)
             {
@@ -172,7 +179,7 @@ namespace UTJ
             var pivots = from springBone in springBones
                          where springBone.pivotNode != null
                          select springBone.pivotNode;
-            var skinBones = GameObjectUtil.GetAllBones(rootObject);
+            var skinBones = Support.GameObjectExtensions.GameObjectUtil.GetAllBones(rootObject);
 
             var maybeSafeToDestroyPivots = from pivot in pivots
                                            where IsPivotProbablySafeToDestroy(pivot, skinBones)

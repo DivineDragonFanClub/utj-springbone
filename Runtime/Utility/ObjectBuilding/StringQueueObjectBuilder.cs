@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     namespace StringQueueExtensions
     {

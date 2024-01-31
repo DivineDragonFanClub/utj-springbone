@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public static class SpringColliderSetup
     {
@@ -25,9 +25,9 @@ namespace UTJ
             var springBones = colliderRoot.GetComponentsInChildren<SpringBone>(true);
             foreach (var springBone in springBones)
             {
-                springBone.sphereColliders = springBone.sphereColliders.Where(collider => collider != null).ToArray();
-                springBone.capsuleColliders = springBone.capsuleColliders.Where(collider => collider != null).ToArray();
-                springBone.panelColliders = springBone.panelColliders.Where(collider => collider != null).ToArray();
+                // springBone.sphereColliders = springBone.sphereColliders.Where(collider => collider != null).ToArray();
+                // springBone.capsuleColliders = springBone.capsuleColliders.Where(collider => collider != null).ToArray();
+                // springBone.panelColliders = springBone.panelColliders.Where(collider => collider != null).ToArray();
             }
         }
 

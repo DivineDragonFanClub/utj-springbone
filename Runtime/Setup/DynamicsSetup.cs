@@ -1,9 +1,11 @@
-using UTJ.StringQueueExtensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UTJ.Support.StringQueueExtensions;
+using Object = UnityEngine.Object;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public class DynamicsSetup
     {
@@ -60,7 +62,7 @@ namespace UTJ
 
             if (importSettings.ImportSpringBones && springBoneSetup != null)
             {
-                springBoneSetup.BuildObjects(springBoneRoot, colliderRoot, requiredBones);
+                springBoneSetup.BuildObjects(springBoneRoot, colliderRoot, requiredBones, springManagerSerializer);
             }
         }
 
@@ -207,6 +209,7 @@ namespace UTJ
         private GameObject colliderRoot;
         private SpringBoneSerialization.ParsedSpringBoneSetup springBoneSetup;
         private SpringColliderSerialization.ParsedColliderSetup colliderSetup;
+        private SpringManagerImporting.SpringManagerSerializer springManagerSerializer;
 
         private static int GetVersionFromSetupRecords(List<TextRecordParsing.Record> sourceRecords)
         {
@@ -317,13 +320,27 @@ namespace UTJ
                 }
             }
 
+            SpringManagerImporting.SpringManagerSerializer springManagerSerializer = null;
+            if (true)
+            {
+                var sourceRecords = TextRecordParsing.ParseRecordsFromText(recordText);
+                var rawManagerRecords = TextRecordParsing.GetSectionRecords(sourceRecords, "SpringJobManager");
+                var myList = new List<SpringManagerImporting.SpringManagerSerializer>();
+                DynamicsSetup.ParseMessage myError = null;
+                if (rawManagerRecords.Count > 0)
+                {
+                    springManagerSerializer = DynamicsSetup.SerializeObjectFromStrings<SpringManagerImporting.SpringManagerSerializer>(rawManagerRecords[1].Items, null, ref myError);
+                }
+            }
+
             var dynamicsSetup = new DynamicsSetup
             {
                 importSettings = actualImportSettings,
                 springBoneRoot = springBoneRoot,
                 colliderRoot = colliderRoot,
                 springBoneSetup = springBoneSetup,
-                colliderSetup = colliderSetup
+                colliderSetup = colliderSetup,
+                springManagerSerializer = springManagerSerializer
             };
 
             return new ParseResults(dynamicsSetup, errors);

@@ -1,7 +1,7 @@
-﻿using System.Linq;
+using System.Linq;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public static partial class SpringColliderSerialization
     {

@@ -28,7 +28,12 @@ namespace UTJ
         private Texture capsuleIcon;
         private Texture panelIcon;
 
-        private SpringBoneSettings settings;
+        public static SpringBoneSettings settings;
+
+        public static bool onlyShowSelectedBones = true;
+        public static bool onlyShowSelectedColliders = false;
+        public static bool showBoneSpheres = true;
+        public static bool showBoneNames = false;
 
         private static Texture LoadIcon(string iconDirectory, string filename)
         {
@@ -36,7 +41,8 @@ namespace UTJ
             var iconTexture = AssetDatabase.LoadAssetAtPath<Texture>(iconPath);
             if (iconTexture == null)
             {
-                Debug.LogWarning("Failed to load the icon:\n" + iconPath);
+                // Silence complaints about icons not being found
+                // Debug.LogWarning("Failed to load the icon:\n" + iconPath);
             }
             return iconTexture;
         }
@@ -214,6 +220,10 @@ namespace UTJ
 
         private void ApplySettings()
         {
+            onlyShowSelectedBones = settings.onlyShowSelectedBones;
+            showBoneSpheres = settings.showBoneSpheres;
+            onlyShowSelectedColliders = settings.onlyShowSelectedColliders;
+            showBoneNames = settings.showBoneNames;
         }
 
 #if false
@@ -273,7 +283,7 @@ namespace UTJ
         }
 
         [System.Serializable]
-        private class SpringBoneSettings
+        public class SpringBoneSettings
         {
             public bool onlyShowSelectedBones;
             public bool onlyShowSelectedColliders;

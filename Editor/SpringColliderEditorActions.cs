@@ -1,8 +1,9 @@
-﻿using UTJ.GameObjectExtensions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UTJ.Support;
+using UTJ.Support.GameObjectExtensions;
 
 namespace UTJ
 {
@@ -169,12 +170,12 @@ namespace UTJ
 
             foreach (var deadCollider in deadColliders)
             {
-                SpringBoneSetup.DestroyUnityObject(deadCollider);
+                SpringBoneSetupUTJ.DestroyUnityObject(deadCollider);
             }
 
             foreach (var gameObject in probablyDeadGameObjects)
             {
-                SpringBoneSetup.DestroyUnityObject(gameObject);
+                SpringBoneSetupUTJ.DestroyUnityObject(gameObject);
             }
         }
 
@@ -209,7 +210,7 @@ namespace UTJ
                     foreach (var collider in unusedSpheres)
                     {
                         maybeUnusedGameObjects.Add(collider.gameObject);
-                        SpringBoneSetup.DestroyUnityObject(collider);
+                        SpringBoneSetupUTJ.DestroyUnityObject(collider);
                     }
 
                     var unusedCapsules = springManager.GetComponentsInChildren<SpringCapsuleCollider>(true)
@@ -217,7 +218,7 @@ namespace UTJ
                     foreach (var collider in unusedCapsules)
                     {
                         maybeUnusedGameObjects.Add(collider.gameObject);
-                        SpringBoneSetup.DestroyUnityObject(collider);
+                        SpringBoneSetupUTJ.DestroyUnityObject(collider);
                     }
 
                     var unusedPanels = springManager.GetComponentsInChildren<SpringPanelCollider>(true)
@@ -225,7 +226,7 @@ namespace UTJ
                     foreach (var collider in unusedPanels)
                     {
                         maybeUnusedGameObjects.Add(collider.gameObject);
-                        SpringBoneSetup.DestroyUnityObject(collider);
+                        SpringBoneSetupUTJ.DestroyUnityObject(collider);
                     }
 
                     var gameObjectsToDelete = maybeUnusedGameObjects
@@ -234,7 +235,7 @@ namespace UTJ
                     {
                         if (gameObject.GetComponents<Component>().Length <= 1)
                         {
-                            SpringBoneSetup.DestroyUnityObject(gameObject);
+                            SpringBoneSetupUTJ.DestroyUnityObject(gameObject);
                         }
                     }
 
@@ -271,7 +272,7 @@ namespace UTJ
                     var components = transform.GetComponents<T>();
                     for (int componentIndex = 1; componentIndex < components.Length; componentIndex++)
                     {
-                        SpringBoneSetup.DestroyUnityObject(components[componentIndex]);
+                        SpringBoneSetupUTJ.DestroyUnityObject(components[componentIndex]);
                     }
                 }
             }

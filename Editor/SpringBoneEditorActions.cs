@@ -1,9 +1,9 @@
-using UTJ.GameObjectExtensions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UTJ.Jobs;
+using UTJ.Support.GameObjectExtensions;
 
 namespace UTJ
 {
@@ -31,7 +31,7 @@ namespace UTJ
             var springManagers = new HashSet<SpringJobManager>();
             foreach (var gameObject in Selection.gameObjects)
             {
-                SpringBoneSetup.AssignSpringBonesRecursively(gameObject.transform);
+                SpringBoneSetupUTJ.AssignSpringBonesRecursively(gameObject.transform);
                 var manager = gameObject.GetComponentInParent<SpringJobManager>();
                 if (manager != null)
                 {
@@ -41,7 +41,7 @@ namespace UTJ
 
             foreach (var manager in springManagers)
             {
-                manager.CachedJobParam();
+                SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
             }
 
             AssetDatabase.Refresh();
@@ -66,7 +66,7 @@ namespace UTJ
                 .Where(bone => bone != null);
             foreach (var springBone in selectedSpringBones)
             {
-                SpringBoneSetup.CreateSpringPivotNode(springBone);
+                SpringBoneSetupUTJ.CreateSpringPivotNode(springBone);
             }
         }
 
@@ -88,7 +88,7 @@ namespace UTJ
             {
                 var manager = gameObject.GetComponent<SpringJobManager>();
                 if (manager == null) { manager = gameObject.AddComponent<SpringJobManager>(); }
-                manager.CachedJobParam();
+                SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
             }
         }
 
@@ -123,17 +123,17 @@ namespace UTJ
             if (EditorUtility.DisplayDialog(
                 "スプリングボーンとマネージャーを削除", queryMessage, "削除", "キャンセル"))
             {
-                SpringBoneSetup.DestroySpringManagersAndBones(rootObject);
+                SpringBoneSetupUTJ.DestroySpringManagersAndBones(rootObject);
                 AssetDatabase.Refresh();
             }
         }
 
         public static void DeleteSelectedBones()
         {
-            var springBonesToDelete = GameObjectUtil.FindComponentsOfType<SpringBone>()
+            var springBonesToDelete = Support.GameObjectExtensions.GameObjectUtil.FindComponentsOfType<SpringBone>()
                 .Where(bone => Selection.gameObjects.Contains(bone.gameObject))
                 .ToArray();
-            var springManagersToUpdate = GameObjectUtil.FindComponentsOfType<SpringManager>()
+            var springManagersToUpdate =  Support.GameObjectExtensions.GameObjectUtil.FindComponentsOfType<SpringManager>()
                 .Where(manager => manager.springBones.Any(bone => springBonesToDelete.Contains(bone)))
                 .ToArray();
             Undo.RecordObjects(springManagersToUpdate, "Delete selected bones");
@@ -177,8 +177,7 @@ namespace UTJ
                 + "SpringManager: " + springManager.name;
             if (EditorUtility.DisplayDialog("ボーンリストから更新", queryMessage, "更新", "キャンセル"))
             {
-                // AutoSpringBoneSetup.UpdateSpringManagerFromBoneList(springManager);
-                springManager.CachedJobParam();
+                AutoSpringBoneSetup.UpdateSpringManagerFromBoneList(springManager);
             }
         }
     }

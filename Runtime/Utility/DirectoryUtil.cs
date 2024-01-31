@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public class DirectoryUtil
     {

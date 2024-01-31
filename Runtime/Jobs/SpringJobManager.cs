@@ -45,7 +45,9 @@ namespace UTJ.Jobs {
 		public float resetDistance = 1f;
 		public float resetAngle = 60f;
 
+#pragma warning disable CS0414 // Field is assigned but its value is never used
 		private bool resetRequest;
+#pragma warning restore CS0414 // Field is assigned but its value is never used
 		private bool firstReset;
 		private Vector3 prevFramePosition;
 		private Quaternion prevFrameRotation;

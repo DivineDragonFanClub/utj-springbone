@@ -73,7 +73,8 @@ namespace UTJ
 
         private static void UpdateBoneList(SpringManager manager)
         {
-            SpringBoneSetup.FindAndAssignSpringBones(manager, true);
+            // SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
+            // Not needed
         }
     }
 }

@@ -9,10 +9,11 @@ namespace UTJ
         public static void ShowWindow()
         {
             var editorWindow = GetWindow<LoadSpringBoneSetupWindow>(
-                "スプリングボーンセットアップを読み込む");
+                "Load spring bone setup");
             if (editorWindow != null)
             {
                 editorWindow.SelectObjectsFromSelection();
+                editorWindow.SelectPrefabFromSelection();
             }
         }
 
@@ -35,14 +36,15 @@ namespace UTJ
 
         // private
 
-        private const string StopPlayModeMessage = "再生モードでセットアップしないでください。";
-        private const string SelectObjectRootsMessage = "スプリングボーンの親オブジェクトを指定してください。";
+        private const string StopPlayModeMessage = "Please don't setup during play mode.";
+        private const string SelectObjectRootsMessage = "Please select the root spring bone object.";
         private const int UIRowHeight = 24;
         private const int UISpacing = 8;
         private const int LabelWidth = 200;
 
         private GameObject springBoneRoot;
-        private DynamicsSetup.ImportSettings importSettings;
+        private GameObject prefabRoot;
+        private Support.DynamicsSetup.ImportSettings importSettings;
 
         private void SelectObjectsFromSelection()
         {
@@ -67,18 +69,26 @@ namespace UTJ
             }
         }
 
+        private void SelectPrefabFromSelection()
+        {
+            if (Selection.objects.Length > 0)
+            {
+                prefabRoot = Selection.objects[0] as GameObject;
+            }
+        }
+
         private void ShowImportSettingsUI(ref Rect uiRect)
         {
             if (importSettings == null)
             {
-                importSettings = new DynamicsSetup.ImportSettings();
+                importSettings = new Support.DynamicsSetup.ImportSettings();
             }
 
-            GUI.Label(uiRect, "読み込み設定", SpringBoneGUIStyles.HeaderLabelStyle);
+            GUI.Label(uiRect, "Loading settings", SpringBoneGUIStyles.HeaderLabelStyle);
             uiRect.y += uiRect.height;
-            importSettings.ImportSpringBones = GUI.Toggle(uiRect, importSettings.ImportSpringBones, "スプリングボーン", SpringBoneGUIStyles.ToggleStyle);
+            importSettings.ImportSpringBones = GUI.Toggle(uiRect, importSettings.ImportSpringBones, "Spring bones", SpringBoneGUIStyles.ToggleStyle);
             uiRect.y += uiRect.height;
-            importSettings.ImportCollision = GUI.Toggle(uiRect, importSettings.ImportCollision, "コライダー", SpringBoneGUIStyles.ToggleStyle);
+            importSettings.ImportCollision = GUI.Toggle(uiRect, importSettings.ImportCollision, "Colliders", SpringBoneGUIStyles.ToggleStyle);
             uiRect.y += uiRect.height;
         }
 
@@ -90,23 +100,29 @@ namespace UTJ
 
             var uiWidth = (int)position.width - UISpacing * 2;
             var yPos = UISpacing;
-            springBoneRoot = DoObjectPicker("スプリングボーンのルート", springBoneRoot, uiWidth, UIRowHeight, ref yPos);
+            springBoneRoot = DoObjectPicker("Spring bone root", springBoneRoot, uiWidth, UIRowHeight, ref yPos);
+            prefabRoot = DoObjectPicker("Prefab root", prefabRoot, uiWidth, UIRowHeight, ref yPos);
+
             var buttonRect = new Rect(UISpacing, yPos, uiWidth, ButtonHeight);
-            if (GUI.Button(buttonRect, "選択からルートを取得", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(buttonRect, "Get root from selection", SpringBoneGUIStyles.ButtonStyle))
             {
                 SelectObjectsFromSelection();
             }
             yPos += ButtonHeight + UISpacing;
             buttonRect.y = yPos;
+            
+            var massSaveButton = new Rect(UISpacing, yPos, uiWidth, ButtonHeight);
+            yPos += ButtonHeight + UISpacing;
+            massSaveButton.y = yPos;
 
-            ShowImportSettingsUI(ref buttonRect);
+            ShowImportSettingsUI(ref massSaveButton);
 
             string errorMessage;
             if (IsOkayToSetup(out errorMessage))
             {
-                if (GUI.Button(buttonRect, "CSVを読み込んでセットアップ", SpringBoneGUIStyles.ButtonStyle))
+                if (GUI.Button(buttonRect, "Load CSV and Setup", SpringBoneGUIStyles.ButtonStyle))
                 {
-                    BrowseAndLoadSpringSetup();
+                    BrowseAndLoadSpringSetup(null, springBoneRoot);
                 }
             }
             else
@@ -114,6 +130,27 @@ namespace UTJ
                 const int MessageHeight = 24;
                 var uiRect = new Rect(UISpacing, buttonRect.y, uiWidth, MessageHeight);
                 GUI.Label(uiRect, errorMessage, SpringBoneGUIStyles.HeaderLabelStyle);
+            }
+            
+            if (GUI.Button(massSaveButton, "Mass Load CSV and Setup", SpringBoneGUIStyles.ButtonStyle))
+            {
+                var path = EditorUtility.OpenFolderPanel("Open folder that has your dynamic CSVs", "", "");
+                // get all the csv files in the folder
+                var csvFiles = System.IO.Directory.GetFiles(path, "*.csv");
+                // get all the names of the files and assume they are the names of the bones
+                // then call BrowseAndLoadSpringSetup for each one
+                foreach (var file in csvFiles)
+                {
+                    
+                    var boneName = System.IO.Path.GetFileNameWithoutExtension(file);
+                    // strip off the _Dynamic part and everything after it
+                    var dynamicIndex = boneName.IndexOf("_Dynamic");
+                    if (dynamicIndex > 0)
+                    {
+                        boneName = boneName.Substring(0, dynamicIndex);
+                    }
+                    BrowseAndLoadSpringSetup(file, getRootToUse(boneName));
+                }
             }
         }
 
@@ -154,7 +191,7 @@ namespace UTJ
         {
             public BuildDynamicsAction
             (
-                DynamicsSetup newSetup,
+                Support.DynamicsSetup newSetup,
                 string newPath,
                 GameObject newSpringBoneRoot
             )
@@ -169,20 +206,25 @@ namespace UTJ
                 setup.Build();
                 AssetDatabase.Refresh();
 
-                const string ResultFormat = "セットアップ完了: {0}\nボーン数: {1} コライダー数: {2}";
+                const string ResultFormat = "Setup complete: {0}\n Bone count: {1} Collider count: {2}";
                 var boneCount = springBoneRoot.GetComponentsInChildren<SpringBone>(true).Length;
-                var colliderCount = SpringColliderSetup.GetColliderTypes()
+                var colliderCount = Support.SpringColliderSetup.GetColliderTypes()
                     .Sum(type => springBoneRoot.GetComponentsInChildren(type, true).Length);
                 var resultMessage = string.Format(ResultFormat, path, boneCount, colliderCount);
                 Debug.Log(resultMessage);
             }
 
-            private DynamicsSetup setup;
+            private Support.DynamicsSetup setup;
             private string path;
             private GameObject springBoneRoot;
         }
+        
+        private GameObject getRootToUse (string name)
+        {
+            return FindInChildren.Find(prefabRoot.transform, name).gameObject;
+        }
 
-        private void BrowseAndLoadSpringSetup()
+        private void BrowseAndLoadSpringSetup(string providedPath, GameObject springBoneRoot)
         {
             string checkErrorMessage;
             if (!IsOkayToSetup(out checkErrorMessage))
@@ -194,14 +236,14 @@ namespace UTJ
             // var initialPath = "";
             var initialDirectory = ""; // System.IO.Path.GetDirectoryName(initialPath);
             var fileFilters = new string[] { "CSVファイル", "csv", "テキストファイル", "txt" };
-            var path = EditorUtility.OpenFilePanelWithFilters(
-                "スプリングボーンセットアップを読み込む", initialDirectory, fileFilters);
+            var path = providedPath ?? EditorUtility.OpenFilePanelWithFilters(
+                "Load spring bone setup", initialDirectory, fileFilters);
             if (path.Length == 0) { return; }
 
-            var sourceText = FileUtil.ReadAllText(path);
+            var sourceText = UTJ.Support.FileUtil.ReadAllText(path);
             if (string.IsNullOrEmpty(sourceText)) { return; }
 
-            var parsedSetup = DynamicsSetup.ParseFromRecordText(springBoneRoot, springBoneRoot, sourceText, importSettings);
+            var parsedSetup = Support.DynamicsSetup.ParseFromRecordText(springBoneRoot, springBoneRoot, sourceText, importSettings);
             if (parsedSetup.Setup != null)
             {
                 var buildAction = new BuildDynamicsAction(parsedSetup.Setup, path, springBoneRoot);
@@ -229,5 +271,24 @@ namespace UTJ
             }
             Close();
         }
+    }
+}
+
+public static class FindInChildren {
+
+    public static Transform Find(this Transform parent, string name) {
+
+        var searchResult = parent.Find(name);
+
+        if (searchResult != null)
+            return searchResult;
+
+        foreach (Transform child in parent) {
+            searchResult = FindInChildren.Find(child,name);
+            if (searchResult != null)
+                return searchResult;
+        }
+
+        return null;
     }
 }

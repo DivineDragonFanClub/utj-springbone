@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     // CSVやタブスペースで区切ったテキストファイルを読み込む簡易読み込み関数
     public class TextRecordParsing

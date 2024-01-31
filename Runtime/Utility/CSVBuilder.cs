@@ -2,7 +2,7 @@
 using System.Reflection;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public class CSVBuilder
     {

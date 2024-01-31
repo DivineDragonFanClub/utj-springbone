@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace UTJ
+namespace Unity.Animations.SpringBones
 {
     public class HighLeg : MonoBehaviour
     {

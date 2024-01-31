@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace UTJ
+namespace UTJ.Support
 {
     public static class CSVUtilities
     {

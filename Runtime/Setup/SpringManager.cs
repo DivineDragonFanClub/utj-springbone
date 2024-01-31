@@ -1,7 +1,7 @@
-using UTJ.GameObjectExtensions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UTJ.Support.GameObjectExtensions;
 
 namespace UTJ
 {
