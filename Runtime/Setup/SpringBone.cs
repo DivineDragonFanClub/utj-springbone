@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UTJ.Jobs;
 
 namespace UTJ
 {
@@ -18,7 +19,6 @@ namespace UTJ
         [SerializeField]
         public Transform[] validChildren = new Transform[0];
         //********************************************************
-
         public enum CollisionStatus
         {
             NoCollision,
@@ -452,6 +452,15 @@ namespace UTJ
         }
 
 #if UNITY_EDITOR
+        public void OnValidate() {
+            var myManager = this.GetComponentInParent<SpringJobManager>();
+            if (myManager == null) {
+                Debug.LogError("SpringBone must be a child of a SpringJobManager!");
+                return;
+            }
+            SpringJobManager.UpdateBoneList(myManager);
+        }
+
         public void DrawSpringBoneCollision()
         {
             var childPosition = ComputeChildPosition();
@@ -534,17 +543,6 @@ namespace UTJ
                 }
             }
         }
-
-        //********************************************************
-        // extend function for Job
-        private void OnValidate() {
-            // NOTE: Job化したら編集不可にする
-            if (this.enabledJobSystem)
-                this.gameObject.hideFlags |= HideFlags.NotEditable;
-            else
-                this.gameObject.hideFlags &= ~HideFlags.NotEditable;
-        }
-        //********************************************************
 #endif
     }
 }
