@@ -70,16 +70,22 @@ namespace UTJ.Jobs {
 		// NOTE: ランタイム時に行わなくても良いボーンの初期化データは全部用意しておく
 		//       その分Job化したら再編集は不可とする（サポートするのは今回パス）
 		[SerializeField]
+		[HideInInspector] 
 		public SpringBone[] SortedBones = null;
 		[SerializeField]
+		[HideInInspector] 
 		public SpringCollider[] jobColliders = null;
 		[SerializeField]
+		[HideInInspector] 
 		public SpringBoneProperties[] jobProperties = null;
 		[SerializeField]
+		[HideInInspector] 
 		public Quaternion[] initLocalRotations = null;
 		[SerializeField]
+		[HideInInspector] 
 		public SpringColliderProperties[] jobColProperties = null;
 		[SerializeField]
+		[HideInInspector] 
 		public LengthLimitProperties[] jobLengthProperties = null;
 		#endregion
 
@@ -499,7 +505,7 @@ namespace UTJ.Jobs {
             EditorUtility.SetDirty(manager);
         }
 
-        private static SpringBone[] FindSpringBones(SpringJobManager manager, bool includeInactive = false) {
+		private static SpringBone[] FindSpringBones(SpringJobManager manager, bool includeInactive = false) {
             var unsortedSpringBones = manager.GetComponentsInChildren<SpringBone>(includeInactive);
             var boneDepthList = unsortedSpringBones
                 .Select(bone => new { bone, depth = GetObjectDepth(bone.transform) })
@@ -508,7 +514,7 @@ namespace UTJ.Jobs {
             return boneDepthList.Select(item => item.bone).ToArray();
         }
 
-  		private static void CachedJobParam(SpringJobManager manager) {
+		private static void CachedJobParam(SpringJobManager manager) {
             manager.SortedBones = FindSpringBones(manager);
             var nSpringBones = manager.SortedBones.Length;
 
@@ -534,12 +540,9 @@ namespace UTJ.Jobs {
                 //var worldRot = root.rotation;
 
                 var springLength = Vector3.Distance(worldPos, childPos);
-                var currTipPos = childPos;
-                var prevTipPos = childPos;
-
+                
                 // Length Limit
-                var targetCount = springBone.lengthLimitTargets.Length;
-                //manager.jobLengthProperties[i] = new LengthLimitProperties[targetCount];
+                var targetCount = (springBone.lengthLimitTargets != null) ? springBone.lengthLimitTargets.Length : 0;                //manager.jobLengthProperties[i] = new LengthLimitProperties[targetCount];
                 if (targetCount > 0) {
                     for (int m = 0; m < targetCount; ++m) {
                         var targetRoot = springBone.lengthLimitTargets[m];

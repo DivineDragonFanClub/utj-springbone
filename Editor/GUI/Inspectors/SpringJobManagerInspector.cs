@@ -40,7 +40,6 @@ namespace UTJ.Jobs
                     actionButtons = new[] {
                         new SpringJobManagerButton("Display Spring Bone window", ShowSpringWindow),
                         new SpringJobManagerButton("Select all Spring Bones", SelectAllBones),
-                        new SpringJobManagerButton("Update Spring Bone List", UpdateBoneList)
                     };
                 }
 
@@ -72,11 +71,6 @@ namespace UTJ.Jobs
         {
             var bones = manager.GetComponentsInChildren<SpringBone>(true);
             Selection.objects = bones.Select(item => item.gameObject).ToArray();
-        }
-
-        public static void UpdateBoneList(SpringJobManager manager)
-        {
-            SpringJobManager.UpdateBoneList(manager);
         }
 
         private static int GetObjectDepth(Transform inObject) {

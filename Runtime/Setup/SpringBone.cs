@@ -455,7 +455,6 @@ namespace UTJ
         public void OnValidate() {
             var myManager = this.GetComponentInParent<SpringJobManager>();
             if (myManager == null) {
-                Debug.LogError("SpringBone must be a child of a SpringJobManager!");
                 return;
             }
             SpringJobManager.UpdateBoneList(myManager);
