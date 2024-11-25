@@ -37,7 +37,6 @@ namespace UTJ
                     actionButtons = new[] {
                         new SpringManagerButton("Display Spring Bone window", ShowSpringWindow),
                         new SpringManagerButton("Select all Spring Bones", SelectAllBones),
-                        new SpringManagerButton("Update Spring Bone List", UpdateBoneList)
                     };
                 }
 
@@ -69,12 +68,6 @@ namespace UTJ
         {
             var bones = manager.GetComponentsInChildren<SpringBone>(true);
             Selection.objects = bones.Select(item => item.gameObject).ToArray();
-        }
-
-        private static void UpdateBoneList(SpringManager manager)
-        {
-            // SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
-            // Not needed
         }
     }
 }
