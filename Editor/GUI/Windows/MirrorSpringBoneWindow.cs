@@ -10,7 +10,7 @@ namespace UTJ
     {
         public static void ShowWindow()
         {
-            var window = GetWindow<MirrorSpringBoneWindow>("SpringBoneミラー");
+            var window = GetWindow<MirrorSpringBoneWindow>("Mirror SpringBones");
             window.Show();
             window.OnShow();
         }
@@ -57,7 +57,7 @@ namespace UTJ
             uiRect = ShowUtilityButtons(uiRect);
             uiRect = ShowBoneList(uiRect);
 
-            if (GUI.Button(uiRect, "ミラーを行う", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(uiRect, "Perform mirroring", SpringBoneGUIStyles.ButtonStyle))
             {
                 PerformMirror();
             }
@@ -66,7 +66,7 @@ namespace UTJ
         private Rect ShowUtilityButtons(Rect uiRect)
         {
             var buttonOffset = uiRect.height + Spacing;
-            if (GUI.Button(uiRect, "選択から取得", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(uiRect, "Get from selection", SpringBoneGUIStyles.ButtonStyle))
             {
                 AcquireBonesFromSelection();
             }
@@ -74,12 +74,12 @@ namespace UTJ
 
             var halfRectWidth = 0.5f * (uiRect.width - Spacing);
             var halfButtonRect = new Rect(uiRect.x, uiRect.y, halfRectWidth, uiRect.height);
-            if (GUI.Button(halfButtonRect, "X < 0のボーンを元に設定", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, "Set for bones where X < 0", SpringBoneGUIStyles.ButtonStyle))
             {
                 AcquireSourceBonesOnSideOfAxis(true);
             }
             halfButtonRect.x += halfRectWidth + Spacing;
-            if (GUI.Button(halfButtonRect, "X > 0のボーンを元に設定", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, "Set for bones where X > 0", SpringBoneGUIStyles.ButtonStyle))
             {
                 AcquireSourceBonesOnSideOfAxis(false);
             }
@@ -87,20 +87,20 @@ namespace UTJ
 
             halfButtonRect.x = uiRect.x;
             halfButtonRect.y = uiRect.y;
-            if (GUI.Button(halfButtonRect, "コピー元を全選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, "Select all copy sources", SpringBoneGUIStyles.ButtonStyle))
             {
                 var sourceBones = boneEntries.Select(entry => entry.sourceBone).Where(bone => bone != null);
                 if (sourceBones.Any()) { Selection.objects = sourceBones.Select(bone => bone.gameObject).ToArray(); }
             }
             halfButtonRect.x += halfRectWidth + Spacing;
-            if (GUI.Button(halfButtonRect, "コピー先を全選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(halfButtonRect, "Select all copy targets", SpringBoneGUIStyles.ButtonStyle))
             {
                 var targetBones = boneEntries.Select(entry => entry.targetBone).Where(bone => bone != null);
                 if (targetBones.Any()) { Selection.objects = targetBones.Select(bone => bone.gameObject).ToArray(); }
             }
             uiRect.y += buttonOffset;
 
-            if (GUI.Button(uiRect, "全選択", SpringBoneGUIStyles.ButtonStyle))
+            if (GUI.Button(uiRect, "Select all", SpringBoneGUIStyles.ButtonStyle))
             {
                 var bonesToSelect = new List<SpringBone>();
                 bonesToSelect.AddRange(boneEntries.Select(entry => entry.sourceBone).Where(bone => bone != null));
@@ -117,9 +117,9 @@ namespace UTJ
             var listBoxBottom = position.height - (Spacing * 2f + RowHeight);
 
             var headerRowRect = new Rect(uiRect.x, uiRect.y, uiRect.width * 0.5f, uiRect.height);
-            GUI.Label(headerRowRect, "元", SpringBoneGUIStyles.LabelStyle);
+            GUI.Label(headerRowRect, "Location", SpringBoneGUIStyles.LabelStyle);
             headerRowRect.x += headerRowRect.width;
-            GUI.Label(headerRowRect, "→ 先", SpringBoneGUIStyles.LabelStyle);
+            GUI.Label(headerRowRect, "→ Destination", SpringBoneGUIStyles.LabelStyle);
             uiRect.y += uiRect.height;
 
             const float ScrollbarWidth = 20f;
