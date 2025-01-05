@@ -67,6 +67,7 @@ namespace UTJ
             foreach (var springBone in selectedSpringBones)
             {
                 SpringBoneSetupUTJ.CreateSpringPivotNode(springBone);
+                EditorUtility.SetDirty(springBone);
             }
         }
 
