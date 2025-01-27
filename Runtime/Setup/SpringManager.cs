@@ -118,6 +118,7 @@ namespace UTJ
                 if (springBone.enabled)
                 {
                     var sumOfForces = GetSumOfForcesOnBone(springBone);
+                    sumOfForces = gravity;
                     springBone.UpdateSpring(timeStep, sumOfForces);
                     springBone.SatisfyConstraintsAndComputeRotation(
                         timeStep, boneIsAnimatedStates[boneIndex] ? dynamicRatio : 1f);
