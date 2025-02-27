@@ -1,7 +1,7 @@
 {
   "name": "com.divinedragon.springbone",
   "displayName": "Unity Chan Spring Bone Burst (UTJ)",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "unity": "2020.3",
   "description": "Spring Bone System for lightweight secondary animations.\nAdds support C# JobSystem & Burst Compiler. (experimental).\n\nTweaked for Fire Emblem Engage modding.",
   "keywords": [
