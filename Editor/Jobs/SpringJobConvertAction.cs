@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
 using UnityEditor;
-using System.Collections.Generic;
+using UnityEngine;
 
-namespace UTJ.Jobs {
-	public static class SpringJobConvertAction {
+namespace UTJ.Jobs
+{
+    public static class SpringJobConvertAction {
 		[MenuItem("UTJ/Make a Job for the SpringBones of the selected GameObject")]
 		public static void SwitchSpringJob() {
 			if (EditorApplication.isPlaying || Application.isPlaying && EditorApplication.isCompiling)
@@ -97,6 +98,11 @@ namespace UTJ.Jobs {
 					jobManager.enableLengthLimits = manager.enableLengthLimits;
 					jobManager.collideWithGround = manager.collideWithGround;
 					jobManager.groundHeight = manager.groundHeight;
+					jobManager.windDisabled = manager.windDisabled;
+					jobManager.windInfluence = manager.windInfluence;
+					jobManager.windPower = manager.localWindPower;
+					jobManager.windDir = manager.localWindDir;
+					jobManager.distanceRate = manager.distanceRate;
 
 					Object.DestroyImmediate(manager);
 
@@ -154,6 +160,11 @@ namespace UTJ.Jobs {
 					origin.enableLengthLimits = manager.enableLengthLimits;
 					origin.collideWithGround = manager.collideWithGround;
 					origin.groundHeight = manager.groundHeight;
+					origin.windDisabled = manager.windDisabled;
+					origin.windInfluence = manager.windInfluence;
+					origin.localWindPower = manager.windPower;
+					origin.localWindDir = manager.windDir;
+					origin.distanceRate = manager.distanceRate;
 					origin.FindSpringBones();
 
 					Object.DestroyImmediate(manager);

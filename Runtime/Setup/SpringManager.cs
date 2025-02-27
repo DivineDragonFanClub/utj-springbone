@@ -31,6 +31,71 @@ namespace UTJ
         [Header("Bones")]
         public SpringBone[] springBones;
 
+        [SerializeField] // RVA: 0x3D4130 Offset: 0x3D4231 VA: 0x3D4130
+        public bool windDisabled; // 0x48
+        [SerializeField] // RVA: 0x3D41A0 Offset: 0x3D42A1 VA: 0x3D41A0
+        public float windInfluence = 1; // 0x4C
+        [SerializeField] // RVA: 0x3D4210 Offset: 0x3D4311 VA: 0x3D4210
+        public Vector3 distanceRate = new Vector3(30, 0, 0); // 0x50
+
+        public bool automaticReset; // 0x78
+        public float resetDistance = 1; // 0x7C
+        public float resetAngle = 60; // 0x80
+        private bool firstReset; // 0x84
+        public bool LodEnable; // 0x85
+        private static float[] LodDistance; // 0x20
+        private static int LodCount; // 0x28
+        private int LodVariation; // 0x88
+        [SerializeField]
+        public float windTime; // 0x8C
+        public Vector3 localWindPower = new Vector3(60, 1, 1); // 0x90
+        public float localWindSpeed = 1; // 0x9C
+        public Vector3 localWindDir = new Vector3(0.3f, 0, 0); // 0xA0
+        private float localApplyTime; // 0xAC
+        private float localStartTime; // 0xB0
+        private float localDurationTime; // 0xB4
+        private float localDecayTime; // 0xB8
+        private Vector3 prevFramePosition; // 0xBC
+        private Quaternion prevFrameRotation; // 0xC8
+        private bool[] boneIsAnimatedStates; // 0xD8
+
+        [SerializeField]
+        public Vector3 WindPower
+        {
+            get
+            {
+                return localWindPower;
+            }
+            set
+            {
+                localWindPower = value;
+            }
+        }
+
+        [SerializeField]
+        public float WindSpeed {
+            get
+            {
+                return localWindSpeed;
+            }
+            set
+            {
+                localWindSpeed = value;
+            }
+        }
+
+        [SerializeField]
+        public Vector3 WindDir {
+            get
+            {
+                return localWindDir;
+            }
+            set
+            {
+                localWindDir = value;
+            }
+        }
+
 #if UNITY_EDITOR
         [Header("Gizmos")]
         public Color boneColor = Color.yellow;
@@ -39,10 +104,10 @@ namespace UTJ
         public Color groundCollisionColor = Color.green;
         public float angleLimitDrawScale = 0.05f;
 
-        public static bool onlyShowSelectedBones = true;
+        public bool onlyShowSelectedBones = false;
         public static bool onlyShowSelectedColliders = false;
-        public static bool showBoneSpheres = true;
-        public static bool showBoneNames = false;
+        public bool showBoneSpheres = true;
+        public bool showBoneNames = false;
 
         // Can't declare as const...
         public static Color DefaultBoneColor { get { return Color.yellow; } }
@@ -112,13 +177,59 @@ namespace UTJ
                 (1f / simulationFrameRate) :
                 Time.deltaTime;
 
+            var timeAlpha = localStartTime + localDurationTime + localDecayTime;
+
+            if (timeAlpha <= 0.0)
+                timeAlpha = 0.0f;
+            else {
+                localApplyTime = localApplyTime + Time.deltaTime;
+
+                var start_time = localStartTime;
+
+                if (localStartTime <= localApplyTime) {
+                    start_time += localDurationTime;
+
+                    if (start_time <= localApplyTime) {
+                        start_time = 1 - (localApplyTime - localStartTime) / localDecayTime;
+                    } else {
+                        start_time = 1;
+                    }
+                } else {
+                    start_time = localApplyTime / localStartTime;
+                }
+
+                if (timeAlpha <= localApplyTime) {
+                    localApplyTime = 0;
+                    localStartTime = 0;
+                    localDurationTime = 0;
+                    localDecayTime = 0;
+                }
+
+                timeAlpha = Mathf.Clamp(start_time, 0, 1);
+            }
+
+            var windSpeed = (1.0f - timeAlpha) * WindSpeed + (timeAlpha * localWindSpeed);
+            this.windTime = (float)(this.windTime + Time.deltaTime * 0.5 * windSpeed);
+
+
             for (var boneIndex = 0; boneIndex < boneCount; boneIndex++)
             {
                 var springBone = springBones[boneIndex];
-                if (springBone.enabled)
+                if (!springBone.enabled)
                 {
-                    var sumOfForces = GetSumOfForcesOnBone(springBone);
-                    sumOfForces = gravity;
+                    var sumOfForces = gravity;
+
+                    if (!windDisabled)
+                    {
+                        var transform = springBone.transform;
+                        var spring_pos = transform.position;
+                        var wind_force = ApplyWindForce(spring_pos, windTime, timeAlpha);
+
+                        sumOfForces.x = gravity.x + wind_force.z + springBone.windInfluence + windInfluence;
+                        sumOfForces.y = gravity.y + wind_force.y + springBone.windInfluence + windInfluence;
+                        sumOfForces.z = gravity.z + wind_force.x + springBone.windInfluence + windInfluence;
+                    }
+                    
                     springBone.UpdateSpring(timeStep, sumOfForces);
                     springBone.SatisfyConstraintsAndComputeRotation(
                         timeStep, boneIsAnimatedStates[boneIndex] ? dynamicRatio : 1f);
@@ -128,7 +239,6 @@ namespace UTJ
 
         // private
 
-        private bool[] boneIsAnimatedStates;
         private ForceProvider[] forceProviders;
 
         // Get the depth of an object (number of consecutive parents)
@@ -159,6 +269,27 @@ namespace UTJ
             return sumOfForces;
         }
 
+        private Vector3 ApplyWindForce(Vector3 pos, float time, float timeAlpha)
+        {
+            var dis_y = pos.y = distanceRate.y;
+            var dis_z = dis_y + pos.z * distanceRate.z + time;
+            var dis_x = pos.x * distanceRate.x + dis_z + time;
+
+            var timeAlpha_clamp = Mathf.Clamp01(timeAlpha);
+
+            var perlin_z = Mathf.PerlinNoise(dis_x, time * 0.01f + dis_y);
+            var perlin_y = Mathf.PerlinNoise(dis_x, time * 0.02f + dis_y);
+            var perlin_x = Mathf.PerlinNoise(dis_z, time * 0.03f + dis_y);
+
+            Vector3 result = new Vector3();
+
+            result.x = (WindPower.z + (localWindPower.z - WindPower.z) * timeAlpha_clamp) * (WindDir.z + (localWindDir.z - WindDir.z) * timeAlpha_clamp + perlin_x - 0.5f);
+            result.y = (WindPower.y + (localWindPower.y - WindPower.y) * timeAlpha_clamp) * (WindDir.y + (localWindDir.y - WindDir.y) * timeAlpha_clamp + perlin_y - 0.5f);
+            result.z = (WindPower.x + (localWindPower.x - WindPower.x) * timeAlpha_clamp) * (WindDir.x + (localWindDir.x - WindDir.x) * timeAlpha_clamp + perlin_z - 0.5f);
+
+            return result;
+        }
+
         private void Awake()
         {
             FindSpringBones(true);
@@ -182,7 +313,9 @@ namespace UTJ
 
         private void LateUpdate()
         {
-            if (automaticUpdates) { UpdateDynamics(); }
+            if (automaticUpdates) {
+                UpdateDynamics();
+            }
         }
 
 #if UNITY_EDITOR
