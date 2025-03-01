@@ -33,6 +33,7 @@ namespace UTJ.Jobs {
 
     [System.Serializable]
     public struct SpringForceComponent {
+        public float time;
         //public Matrix4x4 localToWorldMatrix;
         public Vector3 position;
         public Quaternion rotation;

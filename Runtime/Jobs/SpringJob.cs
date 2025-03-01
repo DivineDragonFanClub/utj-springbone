@@ -384,13 +384,47 @@ namespace UTJ.Jobs {
 		}
 
 		private Vector3 GetTotalForceOnBone(in SpringBoneComponents bone, in SpringBoneProperties prop, NativeArray<SpringForceComponent> forces, int forceCount) {
-			var sumOfForces = this.gravity;
-			for (var i = 0; i < forceCount; i++) {
-				var force = forces[i];
-				sumOfForces += (float3)ComputeForceOnBone(in force, in bone, prop.windInfluence);
-			}
+			//var sumOfForces = this.gravity;
+			//for (var i = 0; i < forceCount; i++) {
+			//	var force = forces[i];
+			//	sumOfForces += (float3)ComputeForceOnBone(in force, in bone, prop.windInfluence);
+			//}
 
-			return sumOfForces;
+			var force_idx = 0;
+			var total_force_z = gravity.x;
+			var total_force_y = gravity.y;
+			var total_force_x = gravity.z;
+
+			if (0 < forceCount)
+            {
+				var force_len = forceCount;
+
+				do {
+					if (!windDisabled)
+					{
+						var bone_pos_dist_y = bone.position.y * distanceRate.y;
+						var time = forces[force_idx].time;
+
+						var fVar6 = time + bone.position.x * distanceRate.x + bone_pos_dist_y;
+						var fVar5 = time + bone_pos_dist_y + bone.position.z * distanceRate.z;
+						bone_pos_dist_y = noise.snoise(new Vector2(0, (float)(time * 0.02 + fVar5)));
+						var fVar3 = windDir.x;
+						var fVar2 = noise.snoise(new Vector2(fVar6, (float)(time * 0.02 + fVar5)));
+						var fVar4 = windDir.y;
+						fVar5 = noise.snoise(new Vector2(fVar6, (float)(time * 0.03 + fVar5)));
+						time = windInfluence;
+						total_force_z = (float)(total_force_z + (fVar3 + (bone_pos_dist_y + -0.5) * 0.25) * windPower.x * time);
+						total_force_x = (float)(total_force_x + (windDir.z + (fVar5 + -0.5) * 0.25) * windPower.z * time);
+						total_force_y = (float)(total_force_y + (fVar4 + (fVar2 + -0.5) * 0.25) * windPower.y * time);
+
+					}
+
+					force_idx++;
+					force_len--;
+				} while (force_len != 0);
+            }
+
+			return new Vector3(total_force_x, total_force_y, total_force_z);
 		}
 
 		// ForceVolume
