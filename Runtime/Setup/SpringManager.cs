@@ -156,6 +156,43 @@ namespace UTJ
             }
         }
 
+        public float UpdateLocalWindRate()
+        {
+            var timeAlpha = localStartTime + localDurationTime + localDecayTime;
+
+            if (0.0 < timeAlpha) {
+                localApplyTime = localApplyTime + Time.deltaTime;
+
+                var wind_rate = Time.deltaTime;
+
+                if (localStartTime <= localApplyTime)
+                {
+                    wind_rate = localStartTime + localDurationTime;
+
+                    if (localApplyTime < wind_rate)
+                    {
+                        wind_rate = 1;
+                    } else {
+                        wind_rate = 1 - (localApplyTime - wind_rate) / localDecayTime;
+                    }
+                } else {
+                    wind_rate = localApplyTime / localStartTime;
+                }
+
+                if (timeAlpha <= localApplyTime)
+                {
+                    localApplyTime = 0;
+                    localStartTime = 0;
+                    localDurationTime = 0;
+                    localDecayTime = 0;
+                }
+
+                return Mathf.Clamp(wind_rate, 0, 1);
+            }
+
+            return 0;
+        }
+
         public void UpdateDynamics()
         {
             var boneCount = springBones.Length;
@@ -177,38 +214,9 @@ namespace UTJ
                 (1f / simulationFrameRate) :
                 Time.deltaTime;
 
-            var timeAlpha = localStartTime + localDurationTime + localDecayTime;
+            var wind_rate = UpdateLocalWindRate();
 
-            if (timeAlpha <= 0.0)
-                timeAlpha = 0.0f;
-            else {
-                localApplyTime = localApplyTime + Time.deltaTime;
-
-                var start_time = localStartTime;
-
-                if (localStartTime <= localApplyTime) {
-                    start_time += localDurationTime;
-
-                    if (start_time <= localApplyTime) {
-                        start_time = 1 - (localApplyTime - localStartTime) / localDecayTime;
-                    } else {
-                        start_time = 1;
-                    }
-                } else {
-                    start_time = localApplyTime / localStartTime;
-                }
-
-                if (timeAlpha <= localApplyTime) {
-                    localApplyTime = 0;
-                    localStartTime = 0;
-                    localDurationTime = 0;
-                    localDecayTime = 0;
-                }
-
-                timeAlpha = Mathf.Clamp(start_time, 0, 1);
-            }
-
-            var windSpeed = (1.0f - timeAlpha) * WindSpeed + (timeAlpha * localWindSpeed);
+            var windSpeed = (1.0f - wind_rate) * WindSpeed + wind_rate * localWindSpeed;
             this.windTime = (float)(this.windTime + Time.deltaTime * 0.5 * windSpeed);
 
 
@@ -223,7 +231,7 @@ namespace UTJ
                     {
                         var transform = springBone.transform;
                         var spring_pos = transform.position;
-                        var wind_force = ApplyWindForce(spring_pos, windTime, timeAlpha);
+                        var wind_force = ApplyWindForce(spring_pos, windTime, wind_rate);
 
                         sumOfForces.x = gravity.x + wind_force.z + springBone.windInfluence + windInfluence;
                         sumOfForces.y = gravity.y + wind_force.y + springBone.windInfluence + windInfluence;
