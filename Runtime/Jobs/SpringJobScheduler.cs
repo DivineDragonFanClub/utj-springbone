@@ -281,6 +281,7 @@ namespace UTJ.Jobs {
 				if (scheduler == null) {
 					GameObject go = new GameObject("SpringJobScheduler(Don't destroy)");
 					scheduler = go.AddComponent<SpringJobScheduler>();
+					go.AddComponent<OriginalWindForceProvider>();
 
 					Debug.Log("Create SpringJobScheduler using default parameter");
 				}

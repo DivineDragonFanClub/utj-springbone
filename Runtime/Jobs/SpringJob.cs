@@ -407,15 +407,15 @@ namespace UTJ.Jobs {
 
 						var fVar6 = time + bone.position.x * distanceRate.x + bone_pos_dist_y;
 						var fVar5 = time + bone_pos_dist_y + bone.position.z * distanceRate.z;
-						bone_pos_dist_y = noise.snoise(new Vector2(0, (float)(time * 0.02 + fVar5)));
+						bone_pos_dist_y = noise.snoise(new Vector2(fVar6, (float)(time * 0.01 + fVar5)));
 						var fVar3 = windDir.x;
 						var fVar2 = noise.snoise(new Vector2(fVar6, (float)(time * 0.02 + fVar5)));
 						var fVar4 = windDir.y;
 						fVar5 = noise.snoise(new Vector2(fVar6, (float)(time * 0.03 + fVar5)));
 						time = windInfluence;
-						total_force_z = (float)(total_force_z + (fVar3 + (bone_pos_dist_y + -0.5) * 0.25) * windPower.x * time);
-						total_force_x = (float)(total_force_x + (windDir.z + (fVar5 + -0.5) * 0.25) * windPower.z * time);
-						total_force_y = (float)(total_force_y + (fVar4 + (fVar2 + -0.5) * 0.25) * windPower.y * time);
+						total_force_z = (float)(total_force_z + (fVar3 + (bone_pos_dist_y -0.5) * 0.25) * windPower.x * time);
+						total_force_x = (float)(total_force_x + (windDir.z + (fVar5 -0.5) * 0.25) * windPower.z * time);
+						total_force_y = (float)(total_force_y + (fVar4 + (fVar2 -0.5) * 0.25) * windPower.y * time);
 
 					}
 

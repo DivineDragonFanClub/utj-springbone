@@ -116,6 +116,7 @@ namespace UTJ.Jobs
 				if (scheduler == null) {
 					var schedulerGo = new GameObject("SpringJobScheduler(Don't destroy)");
 					schedulerGo.AddComponent<SpringJobScheduler>();
+					schedulerGo.AddComponent<OriginalWindForceProvider>();
 				}
 			}
 		}
