@@ -20,35 +20,52 @@ namespace UTJ.Jobs {
 		public bool optimizeTransform = false; // NOTE: 多くの場合上手く行かないかも
 		[Header("Properties")]
 		public bool isPaused = false;
+		[Tooltip("Controls physics calculation frequency. 60 in vanilla bundles")]
 		public int simulationFrameRate = 60;
 		[Range(0f, 1f)]
+		[Tooltip("Amplifies or reduces overall force values. Default 1 - Higher values can cause jerky movement but make bones move quickly")]
 		public float dynamicRatio = 1f;
+		[Tooltip("Persistent force simulating gravity. Usually Y -10. Use positive Y for floating cloth")]
 		public Vector3 gravity = new Vector3(0f, -10f, 0f);
 		[Range(0f, 1f)]
+		[Tooltip("Bounce-back force on spring bones. 0 in vanilla. Can be used for bouncy physics like bust physics")]
 		public float bounce = 0f;
 		[Range(0f, 1f)]
+		[Tooltip("Damping for movement. Low = stays in motion longer. High = stops quickly")]
 		public float friction = 1f;
 		public float time = 0f;
 
 		[Header("Constraints")]
+		[Tooltip("Enable rotation constraints on spring bones")]
 		public bool enableAngleLimits = true;
+		[Tooltip("Enable collision detection")]
 		public bool enableCollision = true;
+		[Tooltip("Enable length limit constraints")]
 		public bool enableLengthLimits = true;
 
 		[Header("Ground Collision")]
+		[Tooltip("Enable collision with ground plane")]
 		public bool collideWithGround = false;
 		public float groundHeight = 0f;
 
+		[Tooltip("Disable all wind effects globally")]
 		public bool windDisabled = false;
+		[Tooltip("Global wind multiplier. Use low/zero for heavy objects. 1 in vanilla")]
 		public float windInfluence = 1f;
 
-		public float3 windPower;
-		public float3 windDir;
-		public float3 distanceRate;
+		[Tooltip("Wind direction and strength. For cloth: (30, 1, 1) in vanilla. Different for special physics")]
+		public float3 windPower = new float3(30, 1, 1);
+		[Tooltip("Wind rotation. (0.3, 0, 0) in vanilla outfits")]
+		public float3 windDir = new float3(0.3f, 0, 0);
+		[Tooltip("Wind blow rate. Low = consistent full power. High = sporadic low power. X 30 for sway in vanilla")]
+		public float3 distanceRate = new float3(30, 0, 0);
 
 		[Header("Reset")]
+		[Tooltip("Automatically reset bones when deformation exceeds thresholds")]
 		public bool automaticReset = true;
+		[Tooltip("Maximum bone deformation before position reset. 1 in vanilla")]
 		public float resetDistance = 1f;
+		[Tooltip("Maximum bone deformation angle (degrees) before reset. 60 in vanilla")]
 		public float resetAngle = 60f;
 
 #pragma warning disable CS0414 // Field is assigned but its value is never used

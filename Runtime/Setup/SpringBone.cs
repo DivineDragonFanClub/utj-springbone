@@ -28,17 +28,25 @@ namespace UTJ
 
         // Forces
         [Range(0f, 5000f)]
+        [Tooltip("Resistance to motion. Range: 0.1 (very loose) to 100 (very stiff). Higher = less movement. Decrease down bone chains")]
         public float stiffnessForce = 0.01f;
         [Range(0f, 1f)]
+        [Tooltip("Air resistance. ≤0.1 for front bones, 0.1-1.0 for others. High drag pulls bone back during forward movement")]
         public float dragForce = 0.4f;
+        [Tooltip("Additional constant force. Typically Y -0.0001. Minimal impact on behavior")]
         public Vector3 springForce = new Vector3(0.0f, -0.0001f, 0.0f);
         [Range(0f, 1f)]
+        [Tooltip("Per-bone wind multiplier. 0 for heavy objects, 1 for full wind effect")]
         public float windInfluence = 1f;
 
         // Angle limits
+        [Tooltip("Separate transform for correct rotation. Must align bone axes. Use Spring Bone Window to create")]
         public Transform pivotNode;
+        [Tooltip("Stiffness for angle limit constraints")]
         public float angularStiffness = 100f;
+        [Tooltip("Y-axis rotation constraint. Enable and set min/max to prevent clipping")]
         public AngleLimits yAngleLimits = new AngleLimits();
+        [Tooltip("Z-axis rotation constraint. Enable and set min/max to prevent clipping")]
         public AngleLimits zAngleLimits = new AngleLimits();
 
         // Length limits
@@ -46,6 +54,7 @@ namespace UTJ
 
         // Collision
         [Range(0f, 0.5f)]
+        [Tooltip("Collision sphere size. 0.05 recommended for reasonable collision detection")]
         public float radius = 0.05f;
         public SpringSphereCollider[] sphereColliders;
         public SpringCapsuleCollider[] capsuleColliders;
