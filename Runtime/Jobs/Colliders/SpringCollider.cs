@@ -126,6 +126,12 @@ namespace UTJ.Jobs
         private void OnValidate() {
             // NOTE: Job化したら編集不可
             this.gameObject.hideFlags |= HideFlags.NotEditable;
+
+            var myManager = this.GetComponentInParent<SpringJobManager>();
+            if (myManager == null) {
+                return;
+            }
+            SpringJobManager.UpdateBoneList(myManager);
         }
 #endif
     }

@@ -498,6 +498,10 @@ namespace UTJ.Jobs {
 		}
 
 #if UNITY_EDITOR
+        private void OnValidate() {
+            UpdateBoneList(this);
+        }
+
         public static void UpdateBoneList(SpringJobManager manager)
         {
             SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
