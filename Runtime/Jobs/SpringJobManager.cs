@@ -54,11 +54,11 @@ namespace UTJ.Jobs {
 		public float windInfluence = 1f;
 
 		[Tooltip("Wind direction and strength. For cloth: (30, 1, 1) in vanilla. Different for special physics")]
-		public float3 windPower = new float3(30, 1, 1);
+		public float3 windPower;
 		[Tooltip("Wind rotation. (0.3, 0, 0) in vanilla outfits")]
-		public float3 windDir = new float3(0.3f, 0, 0);
+		public float3 windDir;
 		[Tooltip("Wind blow rate. Low = consistent full power. High = sporadic low power. X 30 for sway in vanilla")]
-		public float3 distanceRate = new float3(30, 0, 0);
+		public float3 distanceRate;
 
 		[Header("Reset")]
 		[Tooltip("Automatically reset bones when deformation exceeds thresholds")]
