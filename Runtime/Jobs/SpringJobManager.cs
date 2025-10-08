@@ -87,22 +87,16 @@ namespace UTJ.Jobs {
 		// NOTE: ランタイム時に行わなくても良いボーンの初期化データは全部用意しておく
 		//       その分Job化したら再編集は不可とする（サポートするのは今回パス）
 		[SerializeField]
-		[HideInInspector] 
 		public SpringBone[] SortedBones = null;
 		[SerializeField]
-		[HideInInspector] 
 		public SpringCollider[] jobColliders = null;
 		[SerializeField]
-		[HideInInspector] 
 		public SpringBoneProperties[] jobProperties = null;
 		[SerializeField]
-		[HideInInspector] 
 		public Quaternion[] initLocalRotations = null;
 		[SerializeField]
-		[HideInInspector] 
 		public SpringColliderProperties[] jobColProperties = null;
 		[SerializeField]
-		[HideInInspector] 
 		public LengthLimitProperties[] jobLengthProperties = null;
 		#endregion
 
