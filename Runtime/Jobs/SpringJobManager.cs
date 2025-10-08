@@ -459,14 +459,25 @@ namespace UTJ.Jobs {
 		void OnEnable() {
 			// TODO: 毎回Initializeが呼ばれるので無駄
 			SpringJobScheduler.Entry(this);
+#if UNITY_EDITOR
+            _nextEditorRefreshTime = EditorApplication.timeSinceStartup + 1.0;
+            EditorApplication.update -= EditorRefreshTick;
+            EditorApplication.update += EditorRefreshTick;
+#endif
 		}
 
 		void OnDisable() {
 			// TODO: 毎回Finalが呼ばれるので無駄
+#if UNITY_EDITOR
+            EditorApplication.update -= EditorRefreshTick;
+#endif
 			SpringJobScheduler.Exit(this);
 		}
 
 		void OnDestroy() {
+#if UNITY_EDITOR
+            EditorApplication.update -= EditorRefreshTick;
+#endif
 			SpringJobScheduler.Exit(this);
 		}
 
@@ -509,15 +520,31 @@ namespace UTJ.Jobs {
 		}
 
 #if UNITY_EDITOR
-        private void OnValidate() {
-            UpdateBoneList(this);
-        }
-
         public static void UpdateBoneList(SpringJobManager manager)
         {
             SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
             CachedJobParam(manager);
             EditorUtility.SetDirty(manager);
+        }
+
+        [SerializeField]
+        public bool autoUpdateInEditor = true;
+
+        private double _nextEditorRefreshTime;
+
+        private void EditorRefreshTick()
+        {
+            if (Application.isPlaying || this == null || !autoUpdateInEditor)
+            {
+                return;
+            }
+
+            var now = EditorApplication.timeSinceStartup;
+            if (now >= _nextEditorRefreshTime)
+            {
+                _nextEditorRefreshTime = now + 1.0;
+                UpdateBoneList(this);
+            }
         }
 
 		private static SpringBone[] FindSpringBones(SpringJobManager manager, bool includeInactive = false) {

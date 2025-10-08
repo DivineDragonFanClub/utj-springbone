@@ -40,6 +40,7 @@ namespace UTJ.Jobs
                     actionButtons = new[] {
                         new SpringJobManagerButton("Display Spring Bone window", ShowSpringWindow),
                         new SpringJobManagerButton("Select all Spring Bones", SelectAllBones),
+                        new SpringJobManagerButton("Update Spring Bone List", UpdateBoneList),
                     };
                 }
 
@@ -48,6 +49,14 @@ namespace UTJ.Jobs
                 for (int buttonIndex = 0; buttonIndex < actionButtons.Length; buttonIndex++)
                 {
                     actionButtons[buttonIndex].Show(manager);
+                }
+                EditorGUILayout.Space();
+                bool autoUpdate = EditorGUILayout.Toggle("Auto Update", manager.autoUpdateInEditor);
+                if (autoUpdate != manager.autoUpdateInEditor)
+                {
+                    Undo.RecordObject(manager, "Toggle Auto Update");
+                    manager.autoUpdateInEditor = autoUpdate;
+                    EditorUtility.SetDirty(manager);
                 }
                 EditorGUILayout.Space();
                 var boneCount = (manager.SortedBones != null) ? manager.SortedBones.Length : 0;
@@ -71,6 +80,11 @@ namespace UTJ.Jobs
         {
             var bones = manager.GetComponentsInChildren<SpringBone>(true);
             Selection.objects = bones.Select(item => item.gameObject).ToArray();
+        }
+
+        private static void UpdateBoneList(SpringJobManager manager)
+        {
+            SpringJobManager.UpdateBoneList(manager);
         }
 
         private static int GetObjectDepth(Transform inObject) {
