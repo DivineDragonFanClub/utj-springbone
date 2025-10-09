@@ -86,6 +86,8 @@ namespace UTJ.Jobs {
 
 		// NOTE: ランタイム時に行わなくても良いボーンの初期化データは全部用意しておく
 		//       その分Job化したら再編集は不可とする（サポートするのは今回パス）
+		[Space(10)]
+		[Header("The below are debugging purposes only. To change these values, edit them with the inspectors on the individual GameObjects.")]
 		[SerializeField]
 		public SpringBone[] SortedBones = null;
 		[SerializeField]

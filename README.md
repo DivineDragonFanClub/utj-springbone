@@ -5,6 +5,12 @@ This repository was customized using JobSystem/Burst Compiler.
 
 This is a fork tweaked for Fire Emblem Engage modding.
 
+# Changelog
+
+## 1.0.8
+- Fixed an issue that prevented changes from properly reflected in the Spring Job Manager.
+- Added back a debug view of the Spring Job Manager cache (SortedBones, jobColliders, etc.) to help troubleshoot configuration issues.
+
 What follows is the original README.
 
 ## How to set up (example)
