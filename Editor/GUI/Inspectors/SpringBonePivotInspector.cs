@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEditor.Experimental.SceneManagement;
 using UTJ.Jobs;
 
 namespace UTJ
@@ -38,23 +40,33 @@ namespace UTJ
 
         private void InitializeData()
         {
-            if (managers != null && managers.Length > 0) { return; }
+            var pivotComponents = targets.OfType<Component>().ToArray();
 
-            managers = targets
-                .Select(target => target as Component)
-                .Where(target => target != null)
-                .Select(target => target.GetComponentInParent<SpringJobManager>())
+            managers = pivotComponents
+                .Select(component => component.GetComponentInParent<SpringJobManager>())
                 .Where(manager => manager != null)
                 .Distinct()
                 .ToArray();
 
-            var pivots = targets
-                .Where(target => target is Component)
-                .Select(target => ((Component)target).transform)
+            var pivots = pivotComponents
+                .Select(component => component.transform)
                 .ToArray();
 
-            bones = Support.GameObjectExtensions.GameObjectUtil.FindComponentsOfType<SpringBone>()
-                .Where(bone => pivots.Contains(bone.pivotNode))
+            IEnumerable<SpringBone> candidates;
+            var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (prefabStage != null)
+            {
+                candidates = prefabStage.prefabContentsRoot
+                    .GetComponentsInChildren<SpringBone>(true);
+            }
+            else
+            {
+                candidates = Support.GameObjectExtensions.GameObjectUtil.FindComponentsOfType<SpringBone>();
+            }
+
+            bones = candidates
+                .Where(bone => bone != null && bone.pivotNode != null && pivots.Contains(bone.pivotNode))
+                .Distinct()
                 .ToArray();
         }
     }

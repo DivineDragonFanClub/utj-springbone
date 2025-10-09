@@ -86,23 +86,19 @@ namespace UTJ.Jobs {
 
 		// NOTE: ランタイム時に行わなくても良いボーンの初期化データは全部用意しておく
 		//       その分Job化したら再編集は不可とする（サポートするのは今回パス）
+		[Space(10)]
+		[Header("The below are debugging purposes only. To change these values, edit them with the inspectors on the individual GameObjects.")]
 		[SerializeField]
-		[HideInInspector] 
 		public SpringBone[] SortedBones = null;
 		[SerializeField]
-		[HideInInspector] 
 		public SpringCollider[] jobColliders = null;
 		[SerializeField]
-		[HideInInspector] 
 		public SpringBoneProperties[] jobProperties = null;
 		[SerializeField]
-		[HideInInspector] 
 		public Quaternion[] initLocalRotations = null;
 		[SerializeField]
-		[HideInInspector] 
 		public SpringColliderProperties[] jobColProperties = null;
 		[SerializeField]
-		[HideInInspector] 
 		public LengthLimitProperties[] jobLengthProperties = null;
 		#endregion
 
@@ -465,14 +461,25 @@ namespace UTJ.Jobs {
 		void OnEnable() {
 			// TODO: 毎回Initializeが呼ばれるので無駄
 			SpringJobScheduler.Entry(this);
+#if UNITY_EDITOR
+            _nextEditorRefreshTime = EditorApplication.timeSinceStartup + 1.0;
+            EditorApplication.update -= EditorRefreshTick;
+            EditorApplication.update += EditorRefreshTick;
+#endif
 		}
 
 		void OnDisable() {
 			// TODO: 毎回Finalが呼ばれるので無駄
+#if UNITY_EDITOR
+            EditorApplication.update -= EditorRefreshTick;
+#endif
 			SpringJobScheduler.Exit(this);
 		}
 
 		void OnDestroy() {
+#if UNITY_EDITOR
+            EditorApplication.update -= EditorRefreshTick;
+#endif
 			SpringJobScheduler.Exit(this);
 		}
 
@@ -515,15 +522,31 @@ namespace UTJ.Jobs {
 		}
 
 #if UNITY_EDITOR
-        private void OnValidate() {
-            UpdateBoneList(this);
-        }
-
         public static void UpdateBoneList(SpringJobManager manager)
         {
             SpringBoneSetupUTJ.FindAndAssignSpringBones(manager, true);
             CachedJobParam(manager);
             EditorUtility.SetDirty(manager);
+        }
+
+        [SerializeField]
+        public bool autoUpdateInEditor = true;
+
+        private double _nextEditorRefreshTime;
+
+        private void EditorRefreshTick()
+        {
+            if (Application.isPlaying || this == null || !autoUpdateInEditor)
+            {
+                return;
+            }
+
+            var now = EditorApplication.timeSinceStartup;
+            if (now >= _nextEditorRefreshTime)
+            {
+                _nextEditorRefreshTime = now + 1.0;
+                UpdateBoneList(this);
+            }
         }
 
 		private static SpringBone[] FindSpringBones(SpringJobManager manager, bool includeInactive = false) {

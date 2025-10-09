@@ -35,16 +35,10 @@ namespace UTJ.Jobs
             if (targets.Length == 1)
             {
                 // Only show buttons if one component is selected
-                if (actionButtons == null || actionButtons.Length == 0)
-                {
-                    actionButtons = new[] {
-                        new SpringJobManagerButton("Display Spring Bone window", ShowSpringWindow),
-                        new SpringJobManagerButton("Select all Spring Bones", SelectAllBones),
-                    };
-                }
+                var manager = (SpringJobManager)target;
+                MakeButtons(manager.autoUpdateInEditor);
 
                 EditorGUILayout.Space();
-                var manager = (SpringJobManager)target;
                 for (int buttonIndex = 0; buttonIndex < actionButtons.Length; buttonIndex++)
                 {
                     actionButtons[buttonIndex].Show(manager);
@@ -54,7 +48,7 @@ namespace UTJ.Jobs
                 GUILayout.Label("Bones: " + boneCount);
                 EditorGUILayout.Space();
             }
-
+            
             base.OnInspectorGUI();
         }
 
@@ -71,6 +65,27 @@ namespace UTJ.Jobs
         {
             var bones = manager.GetComponentsInChildren<SpringBone>(true);
             Selection.objects = bones.Select(item => item.gameObject).ToArray();
+        }
+
+        private void MakeButtons(bool autoUpdateEnabled)
+        {
+            var buttons = new List<SpringJobManagerButton>
+            {
+                new SpringJobManagerButton("Display Spring Bone window", ShowSpringWindow),
+                new SpringJobManagerButton("Select all Spring Bones", SelectAllBones),
+            };
+
+            if (!autoUpdateEnabled)
+            {
+                buttons.Add(new SpringJobManagerButton("Update Spring Bone List", UpdateBoneList));
+            }
+
+            actionButtons = buttons.ToArray();
+        }
+
+        private static void UpdateBoneList(SpringJobManager manager)
+        {
+            SpringJobManager.UpdateBoneList(manager);
         }
 
         private static int GetObjectDepth(Transform inObject) {

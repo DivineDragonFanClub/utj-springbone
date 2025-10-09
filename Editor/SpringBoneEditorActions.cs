@@ -64,10 +64,24 @@ namespace UTJ
             var selectedSpringBones = Selection.gameObjects
                 .Select(gameObject => gameObject.GetComponent<SpringBone>())
                 .Where(bone => bone != null);
+
+            // multiple managers could be touched in one go
+            var managersNeedingUpdate = new HashSet<SpringJobManager>();
             foreach (var springBone in selectedSpringBones)
             {
                 SpringBoneSetupUTJ.CreateSpringPivotNode(springBone);
                 EditorUtility.SetDirty(springBone);
+
+                var jobManager = springBone.GetComponentInParent<SpringJobManager>();
+                if (jobManager != null)
+                {
+                    managersNeedingUpdate.Add(jobManager);
+                }
+            }
+
+            foreach (var manager in managersNeedingUpdate)
+            {
+                SpringJobManager.UpdateBoneList(manager);
             }
         }
 
