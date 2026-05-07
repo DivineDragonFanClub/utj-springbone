@@ -68,9 +68,7 @@ namespace UTJ.Jobs {
 		[Tooltip("Maximum bone deformation angle (degrees) before reset. 60 in vanilla")]
 		public float resetAngle = 60f;
 
-#pragma warning disable CS0414 // Field is assigned but its value is never used
 		private bool resetRequest;
-#pragma warning restore CS0414 // Field is assigned but its value is never used
 		private bool firstReset;
 		private Vector3 prevFramePosition;
 		private Quaternion prevFrameRotation;
@@ -397,6 +395,12 @@ namespace UTJ.Jobs {
 			if (this.optimizeTransform)
 				AnimatorUtility.OptimizeTransformHierarchy(this.gameObject, null);
 
+			if (this.automaticReset) {
+				this.prevFramePosition = this.transform.position;
+				this.prevFrameRotation = this.transform.rotation;
+				this.firstReset = true;
+			}
+
 			return true;
 		}
 
@@ -436,7 +440,8 @@ namespace UTJ.Jobs {
 		/// Jobデータの取得
 		/// </summary>
 		/// <returns></returns>
-		public SpringJobElement GetElement() {
+		public SpringJobElement GetElement(int no) {
+			this.jobNo = no;
 			this.job.isPaused = this.isPaused;
 			this.job.deltaTime = (this.simulationFrameRate > 0) ? (1f / this.simulationFrameRate) : Time.deltaTime;
 			this.job.dynamicRatio = this.dynamicRatio;
@@ -459,8 +464,11 @@ namespace UTJ.Jobs {
 		}
 
 		void OnEnable() {
-			// TODO: 毎回Initializeが呼ばれるので無駄
+			if (this.entryJob)
+				return;
+			this.entryJob = true;
 			SpringJobScheduler.Entry(this);
+			SpringJobScheduler.Reset(this.jobNo, this);
 #if UNITY_EDITOR
             _nextEditorRefreshTime = EditorApplication.timeSinceStartup + 1.0;
             EditorApplication.update -= EditorRefreshTick;
@@ -469,10 +477,12 @@ namespace UTJ.Jobs {
 		}
 
 		void OnDisable() {
-			// TODO: 毎回Finalが呼ばれるので無駄
 #if UNITY_EDITOR
             EditorApplication.update -= EditorRefreshTick;
 #endif
+			if (!this.entryJob)
+				return;
+			this.entryJob = false;
 			SpringJobScheduler.Exit(this);
 		}
 
@@ -480,18 +490,57 @@ namespace UTJ.Jobs {
 #if UNITY_EDITOR
             EditorApplication.update -= EditorRefreshTick;
 #endif
+			if (!this.entryJob)
+				return;
+			this.entryJob = false;
 			SpringJobScheduler.Exit(this);
+		}
+
+		void LateUpdate() {
+			if (this.automaticReset) {
+				if (this.gameObject.activeInHierarchy) {
+					var pos = this.transform.position;
+					var rot = this.transform.rotation;
+
+					var posDelta = this.prevFramePosition - pos;
+					var sqrDist = posDelta.sqrMagnitude;
+					var angleDeg = Quaternion.Angle(this.prevFrameRotation, rot);
+
+					if (this.firstReset) {
+						var distThreshold = this.resetDistance * 0.1f;
+						var angleThreshold = this.resetAngle * 0.1f;
+						if (sqrDist > distThreshold * distThreshold || angleDeg > angleThreshold) {
+							this.resetRequest = true;
+							this.firstReset = false;
+						}
+					} else {
+						if (sqrDist > this.resetDistance * this.resetDistance || angleDeg > this.resetAngle) {
+							this.resetRequest = true;
+						}
+					}
+
+					this.prevFramePosition = pos;
+					this.prevFrameRotation = rot;
+				} else {
+					this.firstReset = true;
+				}
+			}
+
+			if (this.resetRequest) {
+				this.resetRequest = false;
+				SpringJobScheduler.Reset(this.jobNo, this);
+			}
 		}
 
 		public override void Stabilize() { }
 
 		// RVA: -1 Offset: -1 Slot: 5
-		public override void UpdateSimulation() {
-			this.resetRequest = true;
-		}
+		public override void UpdateSimulation() { }
 
 		// RVA: -1 Offset: -1 Slot: 6
-		public override void ResetSimulation() { }
+		public override void ResetSimulation() {
+			this.resetRequest = true;
+		}
 
 		// RVA: -1 Offset: -1 Slot: 7
 		public override void SetGravity(Vector3 gravity) { }
@@ -565,35 +614,33 @@ namespace UTJ.Jobs {
             manager.jobProperties = new SpringBoneProperties[nSpringBones];
             manager.initLocalRotations = new Quaternion[nSpringBones];
             manager.jobColProperties = new SpringColliderProperties[nSpringBones];
-            //manager.jobLengthProperties = new LengthLimitProperties[nSpringBones][];
             var jobLengthPropertiesList = new List<LengthLimitProperties>();
 
             for (var i = 0; i < nSpringBones; ++i) {
+                manager.SortedBones[i].index = i;
+            }
+
+            for (var i = 0; i < nSpringBones; ++i) {
                 SpringBone springBone = manager.SortedBones[i];
-                //springBone.index = i;
 
                 var root = springBone.transform;
                 var parent = root.parent;
 
-                //var childPos = ComputeChildBonePosition(springBone);
                 var childPos = springBone.ComputeChildPosition();
                 var childLocalPos = root.InverseTransformPoint(childPos);
                 var boneAxis = Vector3.Normalize(childLocalPos);
 
                 var worldPos = root.position;
-                //var worldRot = root.rotation;
-
                 var springLength = Vector3.Distance(worldPos, childPos);
-                
+
                 // Length Limit
-                var targetCount = (springBone.lengthLimitTargets != null) ? springBone.lengthLimitTargets.Length : 0;                //manager.jobLengthProperties[i] = new LengthLimitProperties[targetCount];
+                var targetCount = (springBone.lengthLimitTargets != null) ? springBone.lengthLimitTargets.Length : 0;
                 if (targetCount > 0) {
                     for (int m = 0; m < targetCount; ++m) {
                         var targetRoot = springBone.lengthLimitTargets[m];
                         int targetIndex = -1;
-                        // NOTE: 
-                        //if (targetRoot.TryGetComponent<SpringBone>(out var targetBone))
-                            //targetIndex = targetBone.index;
+                        if (targetRoot.TryGetComponent<SpringBone>(out var targetBone))
+                            targetIndex = targetBone.index;
                         var prop = new LengthLimitProperties {
                             targetIndex = targetIndex,
                             target = Vector3.Magnitude(targetRoot.position - childPos),
@@ -604,25 +651,17 @@ namespace UTJ.Jobs {
 
                 // ReadOnly
                 int parentIndex = -1;
-                int pivotIndex = -1;
-
                 Matrix4x4 pivotLocalMatrix = Matrix4x4.identity;
                 if (parent.TryGetComponent<SpringBone>(out var parentBone))
-                {
-                    parentIndex = Array.FindIndex(manager.SortedBones, b => b == parentBone);
-                    pivotIndex = parentIndex;
-                }
+                    parentIndex = parentBone.index;
 
+                int pivotIndex = -1;
                 var pivotTransform = GetPivotTransform(springBone);
                 var pivotBone = pivotTransform.GetComponentInParent<SpringBone>();
-                if (pivotBone != null)
-                {
-//        var nsbEnabledJobField = nsb.GetType().GetField("enabledJobSystem", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-// 
+                if (pivotBone != null) {
+                    pivotIndex = pivotBone.index;
                     // NOTE: PivotがSpringBoneの子供に置かれている場合の対処
                     if (pivotBone.transform != pivotTransform) {
-                        // NOTE: 1個上の親がSpringBoneとは限らない
-                        //pivotLocalMatrix = Matrix4x4.TRS(pivotTransform.localPosition, pivotTransform.localRotation, Vector3.one);
                         pivotLocalMatrix = Matrix4x4.Inverse(pivotBone.transform.localToWorldMatrix) * pivotTransform.localToWorldMatrix;
                     }
                 }
@@ -666,7 +705,7 @@ namespace UTJ.Jobs {
             manager.jobColliders = manager.GetComponentsInChildren<SpringCollider>(true);
             int nColliders = manager.jobColliders.Length;
             for (int i = 0; i < nColliders; ++i) {
-                //manager.jobColliders[i].index = i;
+                manager.jobColliders[i].index = i;
                 var comp = new SpringColliderProperties() {
                     type = manager.jobColliders[i].type,
                     radius = manager.jobColliders[i].radius,

@@ -12,9 +12,12 @@ namespace UTJ.Jobs {
             const float Threshold = 0.0001f;
             if (Mathf.Abs(range) <= Threshold) { return 0f; }
 
-            var normalizedValue = value / range;
-            normalizedValue = Mathf.Clamp01(normalizedValue);
-            return Mathf.Min(normalizedValue, Mathf.Sqrt(normalizedValue));
+            var f = value / range;
+            if (float.IsNaN(f) || f > 1f) f = 1f;
+            if (float.IsNaN(f) || f < 0f) f = 0f;
+            var sqrtF = Mathf.Sqrt(f);
+            if (float.IsNaN(sqrtF) || f < sqrtF) sqrtF = f;
+            return sqrtF;
         }
 
         // Returns true if exceeded bounds
@@ -32,9 +35,8 @@ namespace UTJ.Jobs {
             var projection = target - upProjection;
             var projectionMagnitude = projection.magnitude;
             var originalSine = Vector3.Dot(projection / projectionMagnitude, basisSide);
-            // The above math might have a bit of floating point error 
-            // so clamp the sine value into a valid range so we don't get NaN later
-            originalSine = Mathf.Clamp(originalSine, -1f, 1f);
+            if (float.IsNaN(originalSine) || originalSine > 1f) originalSine = 1f;
+            if (float.IsNaN(originalSine) || originalSine < -1f) originalSine = -1f;
 
             // Use soft limits based on Hooke's Law to reduce jitter,
             // then apply hard limits
@@ -44,8 +46,8 @@ namespace UTJ.Jobs {
 
             var minAngle = min;
             var maxAngle = max;
-            var preClampAngle = newAngle;
-            newAngle = Mathf.Clamp(newAngle, minAngle, maxAngle);
+            if (float.IsNaN(newAngle) || newAngle > maxAngle) newAngle = maxAngle;
+            if (float.IsNaN(newAngle) || newAngle < minAngle) newAngle = minAngle;
 
             // Apply falloff
             var curveLimit = (newAngle < 0f) ? minAngle : maxAngle;

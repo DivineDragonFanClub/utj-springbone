@@ -223,21 +223,21 @@ namespace UTJ
             for (var boneIndex = 0; boneIndex < boneCount; boneIndex++)
             {
                 var springBone = springBones[boneIndex];
-                if (!springBone.enabled)
+                if (springBone.enabled)
                 {
                     var sumOfForces = gravity;
 
                     if (!windDisabled)
                     {
-                        var transform = springBone.transform;
-                        var spring_pos = transform.position;
+                        var spring_pos = springBone.transform.position;
                         var wind_force = ApplyWindForce(spring_pos, windTime, wind_rate);
+                        var influence = springBone.windInfluence * windInfluence;
 
-                        sumOfForces.x = gravity.x + wind_force.z + springBone.windInfluence + windInfluence;
-                        sumOfForces.y = gravity.y + wind_force.y + springBone.windInfluence + windInfluence;
-                        sumOfForces.z = gravity.z + wind_force.x + springBone.windInfluence + windInfluence;
+                        sumOfForces.x += wind_force.x * influence;
+                        sumOfForces.y += wind_force.y * influence;
+                        sumOfForces.z += wind_force.z * influence;
                     }
-                    
+
                     springBone.UpdateSpring(timeStep, sumOfForces);
                     springBone.SatisfyConstraintsAndComputeRotation(
                         timeStep, boneIsAnimatedStates[boneIndex] ? dynamicRatio : 1f);
@@ -279,21 +279,20 @@ namespace UTJ
 
         private Vector3 ApplyWindForce(Vector3 pos, float time, float timeAlpha)
         {
-            var dis_y = pos.y = distanceRate.y;
+            var dis_y = pos.y * distanceRate.y;
             var dis_z = dis_y + pos.z * distanceRate.z + time;
-            var dis_x = pos.x * distanceRate.x + dis_z + time;
+            var dis_x = pos.x * distanceRate.x + dis_y + time;
 
             var timeAlpha_clamp = Mathf.Clamp01(timeAlpha);
 
-            var perlin_z = Mathf.PerlinNoise(dis_x, time * 0.01f + dis_y);
-            var perlin_y = Mathf.PerlinNoise(dis_x, time * 0.02f + dis_y);
-            var perlin_x = Mathf.PerlinNoise(dis_z, time * 0.03f + dis_y);
+            var perlin_x = Mathf.PerlinNoise(dis_x, time * 0.01f + dis_z);
+            var perlin_y = Mathf.PerlinNoise(dis_x, time * 0.02f + dis_z);
+            var perlin_z = Mathf.PerlinNoise(dis_z, time * 0.03f + dis_z);
 
-            Vector3 result = new Vector3();
-
-            result.x = (WindPower.z + (localWindPower.z - WindPower.z) * timeAlpha_clamp) * (WindDir.z + (localWindDir.z - WindDir.z) * timeAlpha_clamp + perlin_x - 0.5f);
+            Vector3 result;
+            result.x = (WindPower.x + (localWindPower.x - WindPower.x) * timeAlpha_clamp) * (WindDir.x + (localWindDir.x - WindDir.x) * timeAlpha_clamp + perlin_x - 0.5f);
             result.y = (WindPower.y + (localWindPower.y - WindPower.y) * timeAlpha_clamp) * (WindDir.y + (localWindDir.y - WindDir.y) * timeAlpha_clamp + perlin_y - 0.5f);
-            result.z = (WindPower.x + (localWindPower.x - WindPower.x) * timeAlpha_clamp) * (WindDir.x + (localWindDir.x - WindDir.x) * timeAlpha_clamp + perlin_z - 0.5f);
+            result.z = (WindPower.z + (localWindPower.z - WindPower.z) * timeAlpha_clamp) * (WindDir.z + (localWindDir.z - WindDir.z) * timeAlpha_clamp + perlin_z - 0.5f);
 
             return result;
         }
@@ -319,8 +318,58 @@ namespace UTJ
             forceProviders = GameObjectUtil.FindComponentsOfType<ForceProvider>().ToArray();
         }
 
+        public bool RequestResetSpringLength { get; set; }
+
         private void LateUpdate()
         {
+            if (automaticReset)
+            {
+                if (gameObject.activeInHierarchy)
+                {
+                    var pos = transform.position;
+                    var rot = transform.rotation;
+
+                    var posDelta = prevFramePosition - pos;
+                    var sqrDist = posDelta.sqrMagnitude;
+                    var angleDeg = Quaternion.Angle(prevFrameRotation, rot);
+
+                    if (firstReset)
+                    {
+                        var distThreshold = resetDistance * 0.1f;
+                        var angleThreshold = resetAngle * 0.1f;
+                        if (sqrDist > distThreshold * distThreshold || angleDeg > angleThreshold)
+                        {
+                            RequestResetSpringLength = true;
+                            firstReset = false;
+                        }
+                    }
+                    else
+                    {
+                        if (sqrDist > resetDistance * resetDistance || angleDeg > resetAngle)
+                        {
+                            RequestResetSpringLength = true;
+                        }
+                    }
+
+                    prevFramePosition = pos;
+                    prevFrameRotation = rot;
+                }
+                else
+                {
+                    firstReset = true;
+                }
+            }
+
+            if (RequestResetSpringLength)
+            {
+                RequestResetSpringLength = false;
+                var bones = springBones;
+                for (int i = 0; i < bones.Length; ++i)
+                {
+                    bones[i].ResetSpringLengthAndTipPosition();
+                }
+            }
+
             if (automaticUpdates) {
                 UpdateDynamics();
             }

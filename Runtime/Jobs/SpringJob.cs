@@ -114,14 +114,20 @@ namespace UTJ.Jobs {
 				if (prop.parentIndex >= 0) {
 					// 親ノードがSpringBoneなら演算結果を反映する
 					var parentBone = this.nestedComponents[prop.parentIndex];
+					var pr = parentBone.rotation;
+					if (float.IsNaN(pr.x) | float.IsNaN(pr.y) | float.IsNaN(pr.z) | float.IsNaN(pr.w)) {
+						var parentProp = this.nestedProperties[prop.parentIndex];
+						parentBone.localRotation = parentProp.initialLocalRotation;
+						parentBone.rotation = parentProp.initialLocalRotation;
+						this.nestedComponents[prop.parentIndex] = parentBone;
+					}
 					parentRot = parentBone.rotation;
 					bone.position = parentBone.position + parentBone.rotation * prop.localPosition;
 					bone.rotation = parentRot * bone.localRotation;
 				} else {
 					Matrix4x4 parentMat = this.nestedParentComponents[i];
-					parentRot = parentMat.rotation;
+					parentRot = new quaternion((float4x4)parentMat);
 					bone.position = parentMat.MultiplyPoint3x4(prop.localPosition);
-					//bone.position = new Vector3(parentMat.m03, parentMat.m13, parentMat.m23) + parentRot * prop.localPosition;
 					bone.rotation = parentRot * bone.localRotation;
 				}
 
@@ -172,19 +178,14 @@ namespace UTJ.Jobs {
 			if (this.enableLengthLimits)
 				this.ApplyLengthLimits(ref bone, in prop, boneComponents);
 
-			var hadCollision = false;
-
-			if (this.collideWithGround)
-				hadCollision = this.ResolveGroundCollision(ref bone, in prop);
-
-			if (this.enableCollision && !hadCollision)
+			if (this.enableCollision)
 				this.ResolveCollisions(ref bone, in prop);
 
 			if (this.enableAngleLimits) {
 				Matrix4x4 pivotLocalToWorld;
 				if (prop.pivotIndex >= 0) {
 					var pivotBone = boneComponents[prop.pivotIndex];
-					pivotLocalToWorld = (float4x4)Matrix4x4.TRS(pivotBone.position, pivotBone.rotation, Vector3.one) * prop.pivotLocalMatrix;
+					pivotLocalToWorld = math.mul((float4x4)Matrix4x4.TRS(pivotBone.position, pivotBone.rotation, Vector3.one), prop.pivotLocalMatrix);
 				} else {
 					pivotLocalToWorld = this.nestedPivotComponents[index];
 				}
@@ -384,47 +385,39 @@ namespace UTJ.Jobs {
 		}
 
 		private Vector3 GetTotalForceOnBone(in SpringBoneComponents bone, in SpringBoneProperties prop, NativeArray<SpringForceComponent> forces, int forceCount) {
-			//var sumOfForces = this.gravity;
-			//for (var i = 0; i < forceCount; i++) {
-			//	var force = forces[i];
-			//	sumOfForces += (float3)ComputeForceOnBone(in force, in bone, prop.windInfluence);
-			//}
+			var sumX = gravity.x;
+			var sumY = gravity.y;
+			var sumZ = gravity.z;
 
-			var force_idx = 0;
-			var total_force_z = gravity.x;
-			var total_force_y = gravity.y;
-			var total_force_x = gravity.z;
-
-			if (0 < forceCount)
-            {
-				var force_len = forceCount;
-
+			if (forceCount > 0)
+			{
+				var remaining = forceCount;
+				var idx = 0;
 				do {
 					if (!windDisabled)
 					{
-						var bone_pos_dist_y = bone.position.y * distanceRate.y;
-						var time = forces[force_idx].time;
+						var posY_rateY = bone.position.y * distanceRate.y;
+						var time = forces[idx].time;
 
-						var fVar6 = time + bone.position.x * distanceRate.x + bone_pos_dist_y;
-						var fVar5 = time + bone_pos_dist_y + bone.position.z * distanceRate.z;
-						bone_pos_dist_y = noise.snoise(new Vector2(fVar6, (float)(time * 0.01 + fVar5)));
-						var fVar3 = windDir.x;
-						var fVar2 = noise.snoise(new Vector2(fVar6, (float)(time * 0.02 + fVar5)));
-						var fVar4 = windDir.y;
-						fVar5 = noise.snoise(new Vector2(fVar6, (float)(time * 0.03 + fVar5)));
-						time = windInfluence;
-						total_force_z = (float)(total_force_z + (fVar3 + (bone_pos_dist_y -0.5) * 0.25) * windPower.x * time);
-						total_force_x = (float)(total_force_x + (windDir.z + (fVar5 -0.5) * 0.25) * windPower.z * time);
-						total_force_y = (float)(total_force_y + (fVar4 + (fVar2 -0.5) * 0.25) * windPower.y * time);
+						var noiseInputX = time + bone.position.x * distanceRate.x + posY_rateY;
+						var noiseInputYBase = time + posY_rateY + bone.position.z * distanceRate.z;
 
+						var n1 = noise.snoise(new float2(noiseInputX, time * 0.01f + noiseInputYBase));
+						var n2 = noise.snoise(new float2(noiseInputX, time * 0.02f + noiseInputYBase));
+						var n3 = noise.snoise(new float2(noiseInputX, time * 0.03f + noiseInputYBase));
+
+						var influence = windInfluence;
+						sumX += (windDir.x + (n1 - 0.5f) * 0.25f) * windPower.x * influence;
+						sumY += (windDir.y + (n2 - 0.5f) * 0.25f) * windPower.y * influence;
+						sumZ += (windDir.z + (n3 - 0.5f) * 0.25f) * windPower.z * influence;
 					}
 
-					force_idx++;
-					force_len--;
-				} while (force_len != 0);
-            }
+					idx++;
+					remaining--;
+				} while (remaining != 0);
+			}
 
-			return new Vector3(total_force_x, total_force_y, total_force_z);
+			return new Vector3(sumX, sumY, sumZ);
 		}
 
 		// ForceVolume

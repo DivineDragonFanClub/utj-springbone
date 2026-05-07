@@ -186,16 +186,9 @@ namespace UTJ
                 currTipPos = ApplyLengthLimits(deltaTime);
             }
 
-            var hadCollision = false;
-
-            if (manager.collideWithGround)
+            if (manager.enableCollision)
             {
-                hadCollision = CheckForGroundCollision();
-            }
-
-            if (manager.enableCollision & !hadCollision)
-            {
-                hadCollision = CheckForCollision();
+                CheckForCollision();
             }
 
             if (manager.enableAngleLimits)
@@ -416,6 +409,23 @@ namespace UTJ
             {
                 lengthsToLimitTargets[targetIndex] =
                     (lengthLimitTargets[targetIndex].position - childPos).magnitude;
+            }
+        }
+
+        public void ResetSpringLengthAndTipPosition()
+        {
+            var childPos = ComputeChildPosition();
+            springLength = Vector3.Distance(transform.position, childPos);
+            currTipPos = childPos;
+            prevTipPos = childPos;
+
+            if (lengthLimitTargets != null && lengthsToLimitTargets != null
+                && lengthsToLimitTargets.Length == lengthLimitTargets.Length)
+            {
+                for (int i = 0; i < lengthsToLimitTargets.Length; ++i)
+                {
+                    lengthsToLimitTargets[i] = (lengthLimitTargets[i].position - childPos).magnitude;
+                }
             }
         }
 

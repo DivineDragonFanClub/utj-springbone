@@ -317,7 +317,33 @@ namespace UTJ.Jobs {
 			instance.handle.Complete();
 
 			scheduler.Final(instance);
-			return instance.managerTasks.Detach(DetachFineshedJob); ;
+			var detached = instance.managerTasks.Detach(DetachFineshedJob);
+			instance.managerTasks.Order(CollectSpringJobElements);
+			return detached;
+		}
+
+		/// <summary>
+		/// 強制リセット
+		/// </summary>
+		public static void Reset(int no, SpringJobManager manager) {
+			if (instance == null)
+				return;
+
+			// 同期しないと怒られる
+			instance.handle.Complete();
+
+			var element = instance.managers[no];
+			var components = element.nestedComponents;
+			var sortedBones = manager.SortedBones;
+			var length = components.Length;
+			for (int i = 0; i < length; ++i) {
+				var bone = components[i];
+				var pos = sortedBones[i].ComputeChildPosition();
+				bone.currentTipPosition = pos;
+				bone.previousTipPosition = pos;
+				components[i] = bone;
+			}
+			instance.managers[no] = element;
 		}
 
 		/// <summary>
@@ -348,7 +374,7 @@ namespace UTJ.Jobs {
 
 		#region MANAGER TASK
 		private static bool CollectSpringJobElements(SpringJobManager manager, int no) {
-			var element = manager.GetElement();
+			var element = manager.GetElement(no);
 			instance.springJob.forceCount = instance.forceProviderList.Count;
 			instance.springJob.jobManagers[no] = element;
 			return true;
